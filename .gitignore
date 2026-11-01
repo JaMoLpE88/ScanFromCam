@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+local.properties
+captures/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android artifacts
+*.apk
+*.aab
+*.apks
+*.apkm
+*.xapk
+*.keystore
+*.jks
+
+# Salidas de trabajo locales
+.build/
+keystore.properties
