@@ -28,6 +28,7 @@ interface Texts {
     // Counts and dynamic lines.
     fun pageCount(n: Int): String
     fun documentCount(n: Int): String
+    fun selectedCount(n: Int): String
     fun lostPages(n: Int): String
     fun pageNumber(n: Int): String
     fun framedCountdown(seconds: Int): String
@@ -43,6 +44,33 @@ interface Texts {
     val storedLocally: String
     val scan: String
     val now: String
+    val shareSelected: String
+    val deleteSelected: String
+    val deleteSelectedHint: String
+    val shareFailed: String
+
+    // Folders and moving documents.
+    val newFolder: String
+    val cut: String
+    val paste: String
+    val gridView: String
+    val listView: String
+    val folderEmpty: String
+    val deleteFolder: String
+    val deleteFolderHint: String
+    val folderCreateFailed: String
+    val folderDeleteFailed: String
+    val pasteFailed: String
+
+    // App lock.
+    val lockSection: String
+    val appLockToggle: String
+    val appLockHint: String
+    val lockNeedsDeviceSecurity: String
+    val lockedApp: String
+    val lockedAppHint: String
+    val unlockApp: String
+    val unlockAppTitle: String
 
     // Format chooser.
     val formatTitle: String
@@ -156,6 +184,7 @@ object Spanish : Texts {
 
     override fun pageCount(n: Int) = if (n == 1) "1 página" else "$n páginas"
     override fun documentCount(n: Int) = if (n == 1) "1 documento" else "$n documentos"
+    override fun selectedCount(n: Int) = if (n == 1) "1 seleccionado" else "$n seleccionados"
     override fun lostPages(n: Int) = "Se perderá el documento con ${pageCount(n)}."
     override fun pageNumber(n: Int) = "Página $n"
     override fun framedCountdown(seconds: Int) = "Documento encuadrado · capturando en ${seconds}s"
@@ -170,6 +199,31 @@ object Spanish : Texts {
     override val storedLocally = "Los documentos se guardan en este dispositivo."
     override val scan = "Escanear"
     override val now = "ahora"
+    override val shareSelected = "Compartir"
+    override val deleteSelected = "Borrar seleccionados"
+    override val deleteSelectedHint = "Se eliminarán los documentos seleccionados y sus páginas de este dispositivo."
+    override val shareFailed = "No se ha podido compartir"
+
+    override val newFolder = "Nueva carpeta"
+    override val cut = "Cortar"
+    override val paste = "Pegar"
+    override val gridView = "Vista de miniaturas"
+    override val listView = "Vista de lista"
+    override val folderEmpty = "Carpeta vacía"
+    override val deleteFolder = "¿Borrar carpeta?"
+    override val deleteFolderHint = "Se borrarán la carpeta y todos sus documentos de este dispositivo."
+    override val folderCreateFailed = "No se ha podido crear la carpeta"
+    override val folderDeleteFailed = "No se ha podido borrar la carpeta"
+    override val pasteFailed = "No se han podido pegar los documentos"
+
+    override val lockedApp = "ScanFromCam está bloqueada"
+    override val lockedAppHint = "Usa tu huella o el PIN, patrón o contraseña del móvil."
+    override val unlockApp = "Desbloquear"
+    override val unlockAppTitle = "Desbloquea ScanFromCam"
+    override val lockSection = "Bloqueo"
+    override val appLockToggle = "Pedir el bloqueo del móvil"
+    override val appLockHint = "Al abrir la app pedirá la huella o el PIN, patrón o contraseña del dispositivo."
+    override val lockNeedsDeviceSecurity = "Configura antes un PIN, patrón o huella en el móvil."
 
     override val formatTitle = "¿Cómo quieres guardarlo?"
     override val formatHint = "Podrás elegir el acabado de cada página después de capturarla."
@@ -276,6 +330,7 @@ object English : Texts {
 
     override fun pageCount(n: Int) = if (n == 1) "1 page" else "$n pages"
     override fun documentCount(n: Int) = if (n == 1) "1 document" else "$n documents"
+    override fun selectedCount(n: Int) = if (n == 1) "1 selected" else "$n selected"
     override fun lostPages(n: Int) = "The document with ${pageCount(n)} will be lost."
     override fun pageNumber(n: Int) = "Page $n"
     override fun framedCountdown(seconds: Int) = "Document framed · capturing in ${seconds}s"
@@ -290,6 +345,31 @@ object English : Texts {
     override val storedLocally = "Documents are stored on this device."
     override val scan = "Scan"
     override val now = "now"
+    override val shareSelected = "Share"
+    override val deleteSelected = "Delete selected"
+    override val deleteSelectedHint = "The selected documents and their pages will be deleted from this device."
+    override val shareFailed = "Couldn't share"
+
+    override val newFolder = "New folder"
+    override val cut = "Cut"
+    override val paste = "Paste"
+    override val gridView = "Thumbnail view"
+    override val listView = "List view"
+    override val folderEmpty = "Empty folder"
+    override val deleteFolder = "Delete folder?"
+    override val deleteFolderHint = "The folder and all its documents will be deleted from this device."
+    override val folderCreateFailed = "Couldn't create the folder"
+    override val folderDeleteFailed = "Couldn't delete the folder"
+    override val pasteFailed = "Couldn't paste the documents"
+
+    override val lockedApp = "ScanFromCam is locked"
+    override val lockedAppHint = "Use your fingerprint or the phone's PIN, pattern or password."
+    override val unlockApp = "Unlock"
+    override val unlockAppTitle = "Unlock ScanFromCam"
+    override val lockSection = "Lock"
+    override val appLockToggle = "Ask for the phone lock"
+    override val appLockHint = "The app will ask for the device fingerprint or PIN, pattern or password when opened."
+    override val lockNeedsDeviceSecurity = "Set up a PIN, pattern or fingerprint on the phone first."
 
     override val formatTitle = "How do you want to save it?"
     override val formatHint = "You can pick the finish of each page after capturing it."

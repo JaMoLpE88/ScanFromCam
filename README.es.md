@@ -33,6 +33,9 @@ acabado: **Original** (tal cual se capturó) u **Optimizar** (limpio como un
 escaneo real). Las páginas se apilan en un documento que se guarda como un JPG
 por página o como un PDF con capa de texto seleccionable.
 
+Los escaneos van a la biblioteca, donde puedes agruparlos en carpetas, moverlos o
+duplicarlos entre ellas y alternar entre lista y rejilla de miniaturas.
+
 Todo ocurre en el dispositivo. La app ni siquiera pide el permiso
 `INTERNET`.
 
@@ -43,6 +46,42 @@ Todo ocurre en el dispositivo. La app ni siquiera pide el permiso
 </p>
 <p align="center">
   <em>Biblioteca · detección de bordes en vivo y auto-disparo · editor con el acabado optimizado</em>
+</p>
+
+## Novedades
+
+**Carpetas y contadores.** Agrupa los escaneos en carpetas (un solo nivel, sin
+subcarpetas). La cabecera de la biblioteca cuenta *todos* los documentos del
+dispositivo, incluidas las carpetas, y cada carpeta muestra su propio número. Si
+borras una carpeta se va con ella todo lo que contiene, y el aviso lo dice antes
+de hacerlo.
+
+**Seleccionar, cortar, copiar, pegar.** Mantén pulsado un documento para entrar
+en selección, elige los que quieras y actúa sobre todos a la vez: compartir,
+borrar, **cortar** o **copiar**. Navega a otra carpeta y **pega**. La copia
+duplica las filas *y* los ficheros, así que borrar el original deja la copia
+intacta.
+
+**Lista o miniaturas.** Un botón cambia la biblioteca entre filas y rejilla de
+miniaturas, y la elección se recuerda.
+
+**Deslizar para borrar.** Arrastra una fila a la izquierda: se queda apartada
+mostrando la papelera mientras sale la confirmación, y vuelve a su sitio si
+cancelas.
+
+**Bloqueo con el propio móvil.** Ajustes → Bloqueo pide la huella, el PIN, el
+patrón o la contraseña del dispositivo antes de enseñar nada. No se crea ningún
+PIN nuevo ni se guarda nada: es el diálogo del sistema, y la app se vuelve a
+bloquear al salir de ella.
+
+<p align="center">
+  <img src="docs/images/folders-es.jpg" width="220" alt="Biblioteca con carpetas y el contador total">
+  <img src="docs/images/selection-es.jpg" width="220" alt="Selección con compartir, cortar, copiar y borrar">
+  <img src="docs/images/grid-es.jpg" width="220" alt="Vista de miniaturas">
+  <img src="docs/images/app-lock-es.jpg" width="220" alt="Bloqueo de la app">
+</p>
+<p align="center">
+  <em>Carpetas y contadores · selección con cortar y copiar · vista de miniaturas · bloqueo</em>
 </p>
 
 ## Pantallas
@@ -92,18 +131,33 @@ Todo ocurre en el dispositivo. La app ni siquiera pide el permiso
    borde, para que el papel liso siga liso;
 4. devolver el croma, porque aplanar la luminancia lava el color.
 
+**Biblioteca**
+
+- Carpetas planas: crear, renombrar, borrar (con todo lo que contienen, tras un
+  aviso), contador por carpeta y contador total en la cabecera.
+- Mantener pulsado para seleccionar uno o varios documentos y compartirlos,
+  borrarlos, cortarlos o copiarlos; pegarlos en cualquier carpeta.
+- Vista de lista o de miniaturas, recordada entre arranques.
+- Deslizar una fila a la izquierda para borrarla; la fila se queda abierta hasta
+  que confirmes.
+
 **Guardar y compartir**
 
 - Un JPG por página, o un PDF cuya capa de texto es realmente seleccionable y
   buscable (texto invisible sobre la imagen).
-- Nombrar el documento, compartirlo, renombrarlo, abrir el PDF y borrarlo.
+- Nombrar el documento, compartirlo (uno o varios a la vez), renombrarlo, abrir
+  el PDF y borrarlo.
 
 **Privacidad**
 
 - Sin permiso de `INTERNET`: la app no puede subir nada, por construcción.
 - Sin cuentas, sin analítica, sin informes de fallos y sin SDK de anuncios.
 - Los documentos viven en el almacenamiento privado de la app y sólo salen del
-  dispositivo si los compartes tú.
+  dispositivo si los compartes tú. Otras apps y gestores de archivos no pueden
+  leerlos, con o sin el bloqueo.
+- Bloqueo opcional con la credencial del propio móvil (huella, PIN, patrón o
+  contraseña); la app lo pide antes de enseñar nada y no guarda ningún PIN
+  adicional.
 
 ## Gratis es gratis
 
@@ -133,8 +187,8 @@ Ajustes. Añadir otro idioma es implementar `Texts`
 
 Los APK firmados van adjuntos en cada [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.0.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
-- `ScanFromCam-1.0.0-x86_64.apk` — emuladores y tablets x86.
+- `ScanFromCam-1.1.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
+- `ScanFromCam-1.1.0-x86_64.apk` — emuladores y tablets x86.
 
 Descarga el APK y ábrelo en el móvil; Android pedirá permiso para instalar desde esa
 fuente. Sin cuenta de tienda y sin registro.
@@ -160,28 +214,29 @@ instalable rápida, firmada con la clave de debug:
 
 ## Pruebas
 
-- `./gradlew :app:testDebugUnitTest` — 54 tests unitarios: geometría y orden del
+- `./gradlew :app:testDebugUnitTest` — 55 tests unitarios: geometría y orden del
   cuadrilátero, suavizado, ventana de estabilidad, decisión de auto-disparo,
   manejo del recorte, rotación, maquetación de la marca de agua, nombres de
-  fichero y detección de idioma.
-- `./gradlew :app:connectedDebugAndroidTest` — 15 tests instrumentados: detección
+  fichero, detección de idioma y tipos MIME al compartir.
+- `./gradlew :app:connectedDebugAndroidTest` — 16 tests instrumentados: detección
   sobre fotos sintéticas, refinado de esquinas, el pipeline completo de captura,
-  recorte y optimización, PDF con y sin capa de texto, y PDFs grandes en
-  streaming.
+  recorte y optimización, PDF con y sin capa de texto, PDFs grandes en streaming
+  y carpetas (mover, copiar y borrar con su contenido).
 
 ## Estructura
 
 ```
 app/src/main/java/com/scanfromcam/
-  core/            nombres, imágenes, idioma, textos, marca de agua, sonidos
+  core/            nombres, imágenes, idioma, textos, marca de agua, sonidos, compartir, bloqueo
   domain/          modelos, geometría del cuadrilátero, contrato del repositorio
   data/            pipeline OpenCV, SQLite, OCR, PDF
   feature/
-    library/       documentos y miniaturas
+    library/       carpetas, selección, cortar/copiar/pegar, lista o rejilla
     format/        imagen o PDF
     capture/       cámara, detección en vivo, auto-disparo
     editor/        recorte, lupa, acabados, texto
     viewer/        leer, compartir, renombrar, borrar
+  ui/              pantalla de bloqueo y widgets compartidos
   ui/theme/        tokens de diseño
 ```
 

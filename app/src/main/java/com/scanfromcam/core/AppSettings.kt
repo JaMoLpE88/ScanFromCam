@@ -39,6 +39,9 @@ class AppSettings(context: Context) {
     var shutterSound by flag("shutterSound", true)
     var autoCapture by flag("autoCapture", true)
 
+    /** Library layout: thumbnails in a grid instead of rows in a list. */
+    var gridView by flag("gridView", false)
+
     /** Bakes a tiled watermark into every saved page. */
     var watermark by flag("watermark", false)
 
@@ -64,6 +67,9 @@ class AppSettings(context: Context) {
         }
 
     private val delay = mutableStateOf(prefs.getInt("autoCaptureDelay", DEFAULT_DELAY).coerceIn(0, MAX_DELAY))
+
+    /** Gate the app behind the device credential (biometrics, PIN, pattern…). */
+    var appLockEnabled by flag("appLockEnabled", false)
 
     private fun flag(key: String, default: Boolean) = Flag(prefs, key, default)
 

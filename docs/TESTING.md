@@ -41,6 +41,19 @@ depuración USB.
 | 14 | Abrir el PDF en un visor | Se puede **seleccionar el texto** (capa OCR) |
 | 15 | Ajustes → Idioma | Cambia entre español e inglés al instante |
 | 16 | Cerrar y reabrir la app | El documento sigue ahí |
+| 17 | Mantener pulsado un documento | Se activa la selección; tocar otros añade o quita; la barra superior ofrece **Compartir** y **Borrar** |
+| 18 | Con varios seleccionados, **Compartir** | Sale la hoja nativa (WhatsApp, correo, Drive…) con el PDF o los JPG |
+| 19 | Deslizar un documento a la izquierda | Queda desplazado mostrando la papelera y pide confirmación; al cancelar vuelve a su sitio |
+| 20 | **Nueva carpeta** y entrar en ella | La carpeta aparece en la biblioteca y dentro se puede escanear: el documento se guarda en esa carpeta |
+| 21 | Seleccionar documentos → **Cortar**, entrar en una carpeta y **Pegar** | Los documentos se mueven; su PDF y sus páginas siguen abriéndose |
+| 22 | Seleccionar documentos → **Copiar** y **Pegar** | Aparecen duplicados independientes: borrar el original no toca la copia |
+| 23 | Mantener pulsada una carpeta | Permite renombrarla o borrarla; borrarla elimina también todos sus documentos, y el aviso lo dice |
+| 24 | Botón de vista (cuadrícula / lista) | Cambia el diseño, y se recuerda al cerrar y reabrir la app; el deslizar para borrar solo funciona en lista |
+| 25 | Contadores | La portada muestra el total de documentos del dispositivo (con carpetas incluidas) y cada carpeta muestra su número entre paréntesis |
+| 26 | Ajustes → Bloqueo → activar **Pedir el bloqueo del móvil** | Sale el diálogo del sistema pidiendo huella o el PIN/patrón del teléfono (no se crea un PIN nuevo) |
+| 27 | Cerrar y volver a abrir la app con el bloqueo activo | Pide el desbloqueo del móvil antes de enseñar nada; si se cancela, no se entra |
+| 28 | Desbloquear con huella o PIN del móvil | Entra directamente a la biblioteca con todo disponible |
+| 29 | Desactivar la opción en Ajustes | La app deja de pedir el desbloqueo |
 
 ## 3. Comprobar el PDF por fuera
 

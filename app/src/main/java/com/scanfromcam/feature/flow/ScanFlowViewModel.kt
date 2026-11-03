@@ -81,10 +81,14 @@ class ScanFlowViewModel(
     val canFinish: Boolean
         get() = pages.isNotEmpty()
 
-    fun start(selected: DocFormat) {
+    /** Folder the next save goes into; null is the library root. */
+    private var targetFolderId: String? = null
+
+    fun start(selected: DocFormat, folderId: String? = null) {
         resetSession()
         format = selected
         watermark = settings.watermark
+        targetFolderId = folderId
         phase = ScanPhase.CAMERA
     }
 
@@ -237,7 +241,7 @@ class ScanFlowViewModel(
             var createdDocumentId: String? = null
             try {
                 val safeName = sanitizeName(name, prefix = Strings.t.defaultDocumentPrefix)
-                val document = repository.create(safeName, format)
+                val document = repository.create(safeName, format, targetFolderId)
                 createdDocumentId = document.id
 
                 // Saving right after picking Optimizar must not race the pass:
@@ -311,6 +315,7 @@ class ScanFlowViewModel(
         finish = Finish.ORIGINAL
         error = null
         saveStage = null
+        targetFolderId = null
     }
 
     private fun buildDraft(jpeg: ByteArray, quad: List<Point>?): PageDraft {

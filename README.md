@@ -33,6 +33,9 @@ where you can fix the crop, rotate it, recognise its text and pick the finish:
 stack into a document you can save as one JPG per page or as a PDF with a
 selectable text layer.
 
+Saved scans land in the library, where you can group them in folders, move or
+duplicate them between folders and switch between a list and a thumbnail grid.
+
 Everything happens on the device. The app does not even request the
 `INTERNET` permission.
 
@@ -43,6 +46,39 @@ Everything happens on the device. The app does not even request the
 </p>
 <p align="center">
   <em>Library · live edge detection and auto capture · editor with the optimized finish</em>
+</p>
+
+## What's new
+
+**Folders and counters.** Group the scans in folders (one level, no nesting).
+The library header counts *every* document on the device, folders included, and
+each folder shows its own number. Delete a folder and everything inside goes
+with it, after the dialog says so.
+
+**Select, cut, copy, paste.** Long-press a document to start selecting, pick as
+many as you want, and act on all of them at once: share, delete, **cut** or
+**copy**. Navigate to another folder and **paste**. A copy duplicates the rows
+*and* the files, so deleting the original leaves the copy intact.
+
+**List or thumbnails.** One button switches the library between rows and a
+thumbnail grid, and the choice is remembered.
+
+**Swipe to delete.** Drag a row to the left: it stays pushed aside showing the
+bin while the confirmation is up, and slips back if you cancel.
+
+**App lock with the phone's own lock.** Settings → Lock asks for the device
+fingerprint, PIN, pattern or password before showing anything at all. No extra
+PIN is created and nothing new is stored; it is the system prompt, and the app
+locks itself again when you leave it.
+
+<p align="center">
+  <img src="docs/images/folders.jpg" width="220" alt="Library with folders and the total counter">
+  <img src="docs/images/selection.jpg" width="220" alt="Selection with share, cut, copy and delete">
+  <img src="docs/images/grid.jpg" width="220" alt="Thumbnail view">
+  <img src="docs/images/app-lock.jpg" width="220" alt="App lock">
+</p>
+<p align="center">
+  <em>Folders and counters · selection with cut and copy · thumbnail view · app lock</em>
 </p>
 
 ## Screens
@@ -90,18 +126,32 @@ Everything happens on the device. The app does not even request the
    an edge, so plain paper stays flat;
 4. bring the chroma back, because flattening luminance washes colour out.
 
+**Library**
+
+- Flat folders: create, rename, delete (with everything inside, after a
+  warning), a per-folder count and a total count in the header.
+- Long-press to select one or many documents and share, delete, cut or copy
+  them; paste them into any folder.
+- List or thumbnail view, remembered between launches.
+- Swipe a row left to delete it; the row stays open until you confirm.
+
 **Save and share**
 
 - One JPG per page, or a PDF whose text layer is really selectable and
   searchable (invisible text drawn over the image).
-- Name the document, share it, rename it, open the PDF, delete it.
+- Name the document, share it (one or several at once), rename it, open the PDF,
+  delete it.
 
 **Privacy**
 
 - No `INTERNET` permission: the app cannot upload anything, by construction.
 - No accounts, no analytics, no crash reporting, no ad SDK.
 - Documents live in the app's private storage and never leave the device unless
-  you share them yourself.
+  you share them yourself. Other apps and file managers cannot read them, with
+  or without the app lock.
+- Optional app lock with the phone's own credential (fingerprint, PIN, pattern
+  or password); the app asks for it before showing anything and stores no extra
+  PIN.
 
 ## Free means free
 
@@ -131,8 +181,8 @@ Settings. More languages are a `Texts` implementation away
 
 Signed APKs are attached to every [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.0.0-arm64-v8a.apk` — phones and tablets (almost every current device).
-- `ScanFromCam-1.0.0-x86_64.apk` — emulators and x86 tablets.
+- `ScanFromCam-1.1.0-arm64-v8a.apk` — phones and tablets (almost every current device).
+- `ScanFromCam-1.1.0-x86_64.apk` — emulators and x86 tablets.
 
 Download the APK and open it on the phone; Android will ask to allow installs from that
 source. No store account, no sign-up.
@@ -158,27 +208,28 @@ build signed with the debug key:
 
 ## Tests
 
-- `./gradlew :app:testDebugUnitTest` — 54 unit tests: quad geometry and ordering,
+- `./gradlew :app:testDebugUnitTest` — 55 unit tests: quad geometry and ordering,
   quad smoothing, stability window, capture gating, crop handles, rotation,
-  watermark layout, file naming, language detection.
-- `./gradlew :app:connectedDebugAndroidTest` — 15 instrumented tests: detection on
+  watermark layout, file naming, language detection, share MIME types.
+- `./gradlew :app:connectedDebugAndroidTest` — 16 instrumented tests: detection on
   synthetic photos, corner refinement, the whole capture → crop → optimize
-  pipeline, PDF with and without a text layer, and streaming builds of large
-  PDFs.
+  pipeline, PDF with and without a text layer, streaming builds of large PDFs,
+  and folders (move, copy, delete with content).
 
 ## Project layout
 
 ```
 app/src/main/java/com/scanfromcam/
-  core/            names, images, language, texts, watermark, sounds
+  core/            names, images, language, texts, watermark, sounds, sharing, app lock
   domain/          models, quad geometry, repository contract
   data/            OpenCV pipeline, SQLite, OCR, PDF
   feature/
-    library/       documents and thumbnails
+    library/       folders, selection, cut/copy/paste, list or grid
     format/        image or PDF
     capture/       camera, live detection, auto capture
     editor/        crop, magnifier, finishes, text
     viewer/        read, share, rename, delete
+  ui/              lock gate and shared widgets
   ui/theme/        design tokens
 ```
 

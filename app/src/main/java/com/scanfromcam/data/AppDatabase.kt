@@ -14,6 +14,16 @@ class AppDatabase(context: Context, name: String? = "scanfromcam.db") :
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """
+            CREATE TABLE folders (
+                id TEXT PRIMARY KEY NOT NULL,
+                name TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                locked INTEGER NOT NULL DEFAULT 0
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
             CREATE TABLE documents (
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
@@ -21,7 +31,9 @@ class AppDatabase(context: Context, name: String? = "scanfromcam.db") :
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL,
                 page_count INTEGER NOT NULL DEFAULT 0,
-                pdf_path TEXT
+                pdf_path TEXT,
+                folder_id TEXT REFERENCES folders(id) ON DELETE SET NULL,
+                locked INTEGER NOT NULL DEFAULT 0
             )
             """.trimIndent()
         )
@@ -41,11 +53,34 @@ class AppDatabase(context: Context, name: String? = "scanfromcam.db") :
             """.trimIndent()
         )
         db.execSQL("CREATE INDEX idx_pages_doc ON pages(doc_id, idx)")
+        db.execSQL("CREATE INDEX idx_documents_folder ON documents(folder_id)")
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) {
+            // Shipped without the lock columns: those come in the v3 step below,
+            // so a v1 database upgrading straight to v3 does not get them twice.
+            db.execSQL(
+                """
+                CREATE TABLE folders (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    name TEXT NOT NULL,
+                    created_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "ALTER TABLE documents ADD COLUMN folder_id TEXT REFERENCES folders(id) ON DELETE SET NULL"
+            )
+            db.execSQL("CREATE INDEX idx_documents_folder ON documents(folder_id)")
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE documents ADD COLUMN locked INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE folders ADD COLUMN locked INTEGER NOT NULL DEFAULT 0")
+        }
+    }
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 3
     }
 }

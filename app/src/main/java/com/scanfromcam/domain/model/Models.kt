@@ -19,6 +19,13 @@ data class DocumentMeta(
     val pdfPath: String?,
 )
 
+/** A flat folder. Documents live either in one folder or in the library root. */
+data class FolderMeta(
+    val id: String,
+    val name: String,
+    val createdAt: Long,
+)
+
 data class PageMeta(
     val id: String,
     val docId: String,

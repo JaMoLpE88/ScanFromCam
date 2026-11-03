@@ -1,8 +1,5 @@
 package com.scanfromcam.feature.viewer
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TextFields
@@ -53,9 +51,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.scanfromcam.core.Strings
+import com.scanfromcam.core.openFile
+import com.scanfromcam.core.shareFiles
 import com.scanfromcam.domain.model.DocFormat
 import com.scanfromcam.ui.theme.Tokens
 import java.io.File
@@ -116,11 +115,7 @@ fun ViewerScreen(
                                 if (files.isEmpty()) {
                                     vm.error = t.nothingToShare
                                 } else {
-                                    shareFiles(
-                                        context,
-                                        files,
-                                        if (files.first().extension == "pdf") "application/pdf" else "image/jpeg",
-                                    )
+                                    shareFiles(context, files)
                                 }
                             },
                         )
@@ -278,35 +273,3 @@ fun ViewerScreen(
         )
     }
 }
-
-private fun shareFiles(context: Context, files: List<File>, mime: String) {
-    val uris = files.map {
-        FileProvider.getUriForFile(context, "${context.packageName}.files", it)
-    }
-    val intent = if (uris.size == 1) {
-        Intent(Intent.ACTION_SEND).apply {
-            type = mime
-            putExtra(Intent.EXTRA_STREAM, uris.first())
-        }
-    } else {
-        Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-            type = mime
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
-        }
-    }
-    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    runCatching { context.startActivity(Intent.createChooser(intent, Strings.t.shareDocument)) }
-        .onFailure { }
-}
-
-private fun openFile(context: Context, file: File, mime: String) {
-    val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, mime)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    runCatching { context.startActivity(intent) }
-}
-
-
-

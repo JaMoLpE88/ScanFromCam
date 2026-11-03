@@ -1,18 +1,23 @@
 package com.scanfromcam
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -28,16 +33,18 @@ import com.scanfromcam.feature.library.LibraryViewModel
 import com.scanfromcam.feature.settings.SettingsScreen
 import com.scanfromcam.feature.viewer.ViewerScreen
 import com.scanfromcam.feature.viewer.ViewerViewModel
+import com.scanfromcam.ui.AppLockGate
 import com.scanfromcam.ui.theme.ScanFromCamTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ScanFromCamTheme {
                 val container = (application as ScanFromCamApp).container
-                AppRoot(container)
+                // Nothing is shown until the device credential clears the app lock.
+                AppLockGate(container.appLock) { AppRoot(container) }
             }
         }
     }
@@ -56,6 +63,16 @@ private fun AppRoot(container: AppContainer) {
         viewModelFactory { initializer { LibraryViewModel(container.repository) } }
     }
     val library: LibraryViewModel = viewModel(factory = libraryFactory)
+
+    // Leaving the app locks it again: locked folders and documents ask for the PIN.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) container.appLock.lock()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     var viewerDocId by remember { mutableStateOf<String?>(null) }
     var showFormat by remember { mutableStateOf(false) }
@@ -87,6 +104,7 @@ private fun AppRoot(container: AppContainer) {
         }
         else -> LibraryScreen(
             vm = library,
+            settings = container.settings,
             onScan = { showFormat = true },
             onOpen = { viewerDocId = it },
             onSettings = { showSettings = true },
@@ -96,12 +114,12 @@ private fun AppRoot(container: AppContainer) {
         if (showSettings) {
             SettingsScreen(settings = container.settings, onBack = { showSettings = false })
         }
-
         if (showFormat) {
             FormatSheet(
                 onPick = { format ->
                     showFormat = false
-                    flow.start(format)
+                    // A scan started inside a folder is saved into that folder.
+                    flow.start(format, library.folderId)
                 },
                 onDismiss = { showFormat = false },
             )

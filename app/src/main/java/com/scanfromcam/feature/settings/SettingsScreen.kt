@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +52,7 @@ import com.scanfromcam.core.AppSettings
 import com.scanfromcam.core.Lang
 import com.scanfromcam.core.Strings
 import com.scanfromcam.ui.theme.Tokens
+import com.scanfromcam.ui.deviceHasCredential
 
 private const val WEB_URL = "http://jmolo.es"
 private const val GITHUB_URL = "https://github.com/JaMoLpE88"
@@ -136,6 +138,18 @@ fun SettingsScreen(
                     )
                 }
 
+                Section(t.lockSection) {
+                    val canLock = remember { deviceHasCredential(context) }
+                    ToggleRow(
+                        title = t.appLockToggle,
+                        subtitle = if (canLock) t.appLockHint else t.lockNeedsDeviceSecurity,
+                        checked = settings.appLockEnabled && canLock,
+                        enabled = canLock,
+                    ) { enabled ->
+                        settings.appLockEnabled = enabled
+                    }
+                }
+
                 Section(t.about) {
                     LinkRow(
                         title = t.web,
@@ -197,21 +211,26 @@ private fun ToggleRow(
     title: String,
     subtitle: String,
     checked: Boolean,
+    enabled: Boolean = true,
     onChange: (Boolean) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onChange(!checked) }
+            .clickable(enabled = enabled) { onChange(!checked) }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = Tokens.TextPrimary, style = MaterialTheme.typography.titleMedium)
+            Text(
+                title,
+                color = if (enabled) Tokens.TextPrimary else Tokens.TextMuted,
+                style = MaterialTheme.typography.titleMedium,
+            )
             Text(subtitle, color = Tokens.TextMuted, style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.width(12.dp))
-        Switch(checked = checked, onCheckedChange = onChange)
+        Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
     }
 }
 
