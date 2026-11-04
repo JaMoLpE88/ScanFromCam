@@ -61,6 +61,15 @@ publicado con la release y se entrega al instalador de Android. *Descargar sin
 preguntar* en Ajustes lo baja solo y únicamente se detiene para pedir la
 instalación.
 
+<p align="center">
+  <img src="docs/images/update-new-es.jpg" width="220" alt="Nueva versión, con las novedades y lo que ocupa">
+  <img src="docs/images/update-downloading.jpg" width="220" alt="Descargando el APK verificado">
+  <img src="docs/images/update-ready.jpg" width="220" alt="Lista para instalar, el resto es de Android">
+</p>
+<p align="center">
+  <em>Nueva versión · descarga en segundo plano · entrega al instalador</em>
+</p>
+
 **Carpetas y contadores.** Agrupa los escaneos en carpetas (un solo nivel, sin
 subcarpetas). La cabecera de la biblioteca cuenta *todos* los documentos del
 dispositivo, incluidas las carpetas, y cada carpeta muestra su propio número. Si
@@ -173,6 +182,13 @@ bloquear al salir de ella.
   contraseña); la app lo pide antes de enseñar nada y no guarda ningún PIN
   adicional.
 
+<p align="center">
+  <img src="docs/images/update-consent-es.jpg" width="220" alt="La única petición de red, y se pregunta una vez">
+</p>
+<p align="center">
+  <em>Toda la superficie de red: una pregunta, en el primer arranque</em>
+</p>
+
 ## Gratis es gratis
 
 - **Sin anuncios.** Ni banner, ni splash, ni "mira un vídeo para desbloquear".
@@ -207,6 +223,13 @@ Los APK firmados van adjuntos en cada [release](https://github.com/JaMoLpE88/Sca
 Descarga el APK y ábrelo en el móvil; Android pedirá permiso para instalar desde esa
 fuente. Sin cuenta de tienda y sin registro. A partir de la 1.2.0 la app se actualiza
 sola desde las releases siguientes, así que solo hay que instalarla a mano una vez.
+
+<p align="center">
+  <img src="docs/images/update-settings-es.jpg" width="220" alt="Ajustes → Actualizaciones">
+</p>
+<p align="center">
+  <em>Ajustes → Actualizaciones: buscar ahora, o dejar que se baje sola la siguiente</em>
+</p>
 
 ## Compilar
 

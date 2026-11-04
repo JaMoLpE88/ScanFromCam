@@ -60,6 +60,15 @@ size; the APK is fetched to the app's cache, checked against the SHA-256 publish
 with the release, and handed to the Android installer. *Download without asking*
 in Settings fetches it on its own and only stops to ask for the install.
 
+<p align="center">
+  <img src="docs/images/update-new.jpg" width="220" alt="New version, with the notes and the download size">
+  <img src="docs/images/update-downloading.jpg" width="220" alt="Downloading the verified APK">
+  <img src="docs/images/update-ready.jpg" width="220" alt="Ready to install, the rest is Android's">
+</p>
+<p align="center">
+  <em>New version · background download · install hand-off</em>
+</p>
+
 **Folders and counters.** Group the scans in folders (one level, no nesting).
 The library header counts *every* document on the device, folders included, and
 each folder shows its own number. Delete a folder and everything inside goes
@@ -165,6 +174,13 @@ locks itself again when you leave it.
   or password); the app asks for it before showing anything and stores no extra
   PIN.
 
+<p align="center">
+  <img src="docs/images/update-consent.jpg" width="220" alt="The only network request, asked once">
+</p>
+<p align="center">
+  <em>The whole network surface: one question, on first launch</em>
+</p>
+
 ## Free means free
 
 - **No ads.** Not a banner, not a splash, not a "watch a video to unlock".
@@ -199,6 +215,13 @@ Signed APKs are attached to every [release](https://github.com/JaMoLpE88/ScanFro
 Download the APK and open it on the phone; Android will ask to allow installs from that
 source. No store account, no sign-up. From 1.2.0 on, the app updates itself from
 future releases, so you only sideload once.
+
+<p align="center">
+  <img src="docs/images/update-settings.jpg" width="220" alt="Settings → Updates">
+</p>
+<p align="center">
+  <em>Settings → Updates: check now, or let it fetch the next version by itself</em>
+</p>
 
 ## Build
 

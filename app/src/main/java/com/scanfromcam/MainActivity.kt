@@ -142,8 +142,8 @@ private fun AppRoot(container: AppContainer) {
 
         val updateState by container.updater.state.collectAsState()
         val consentPending = container.settings.updateConsent == null
-        // The consent sheet also opens over Settings, where the user asks again.
-        val updateVisible = consentPending || (!showSettings && phase == null && docId == null && when (val state = updateState) {
+        // Also over Settings: the check starts there, and the sheet is the answer.
+        val updateVisible = consentPending || (phase == null && docId == null && when (val state = updateState) {
             is UpdateState.Available,
             is UpdateState.Downloading,
             is UpdateState.Ready,
