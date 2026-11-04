@@ -33,6 +33,9 @@ data class AppRelease(
     val digest: String?,
 )
 
+/** The notes of one release, as the changelog shows them. */
+data class Changelog(val version: String, val notes: String)
+
 data class DownloadProgress(val bytes: Long, val total: Long, val bytesPerSecond: Long) {
     val fraction: Float get() = if (total > 0) (bytes.toFloat() / total).coerceIn(0f, 1f) else 0f
 }
@@ -147,6 +150,22 @@ class Updater(
     fun refreshInstallPermission() {
         val pending = _state.value as? UpdateState.NeedsPermission ?: return
         if (canInstall()) _state.value = UpdateState.Ready(pending.release, pending.file)
+    }
+
+    /**
+     * Notes of the release already known: the one in flight, or the payload kept
+     * from the last check. Nothing goes to the network here.
+     */
+    fun changelog(): Changelog? {
+        val release = when (val current = _state.value) {
+            is UpdateState.Available -> current.release
+            is UpdateState.Downloading -> current.release
+            is UpdateState.Ready -> current.release
+            is UpdateState.NeedsPermission -> current.release
+            else -> null
+        }
+        return release?.let { Changelog(it.version, it.notes) }
+            ?: cachedChangelog(settings.lastReleaseJson)
     }
 
     /** A downloaded APK without a live flow behind it is dead weight. */
@@ -387,6 +406,18 @@ private fun versionNumbers(value: String): List<Int>? {
 
 /** One line of the notes; [title] is the bold lead-in the release body gave it. */
 data class Note(val title: String?, val text: String)
+
+/** Version and notes of a GitHub release payload, without needing its APK assets. */
+internal fun cachedChangelog(json: String?): Changelog? {
+    if (json == null) return null
+    return runCatching {
+        val root = JSONObject(json)
+        Changelog(
+            version = root.getString("tag_name").removePrefix("v").removePrefix("V"),
+            notes = root.optString("body").orEmpty(),
+        )
+    }.getOrNull()
+}
 
 private val LINK = Regex("\\[([^]]+)]\\([^)]*\\)")
 private val HEADING = Regex("^#+\\s*")

@@ -194,6 +194,8 @@ interface Texts {
     val updateAutoHint: String
     val updateDisabled: String
     val updateNotes: String
+    val updateChangelogHint: String
+    val updateNotesEmpty: String
     val updateRetry: String
     val updateErrorNetwork: String
     val updateErrorRate: String
@@ -388,6 +390,8 @@ object Spanish : Texts {
     override val updateAutoHint = "Baja la versión nueva en segundo plano y solo pregunta al instalar."
     override val updateDisabled = "Desactivadas"
     override val updateNotes = "Novedades"
+    override val updateChangelogHint = "Lo que cambió en la última versión"
+    override val updateNotesEmpty = "Todavía no hay novedades guardadas"
     override val updateRetry = "Reintentar"
     override val updateErrorNetwork = "No se ha podido conectar con GitHub"
     override val updateErrorRate = "GitHub ha limitado las peticiones. Prueba más tarde"
@@ -573,6 +577,8 @@ object English : Texts {
     override val updateAutoHint = "Fetches the new version in the background and only asks when installing."
     override val updateDisabled = "Off"
     override val updateNotes = "What's new"
+    override val updateChangelogHint = "What changed in the latest version"
+    override val updateNotesEmpty = "No release notes saved yet"
     override val updateRetry = "Retry"
     override val updateErrorNetwork = "Couldn't reach GitHub"
     override val updateErrorRate = "GitHub is rate limiting the requests. Try later"

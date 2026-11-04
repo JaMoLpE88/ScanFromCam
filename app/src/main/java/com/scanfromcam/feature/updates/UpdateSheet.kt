@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.scanfromcam.core.AppRelease
 import com.scanfromcam.core.AppSettings
@@ -186,18 +187,7 @@ private fun AvailableContent(
             style = MaterialTheme.typography.labelSmall,
         )
         Spacer(Modifier.height(6.dp))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 200.dp)
-                .clip(RoundedCornerShape(Tokens.RadiusCard.dp))
-                .background(Tokens.Surface2)
-                .verticalScroll(rememberScrollState())
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(11.dp),
-        ) {
-            notes.forEach { NoteRow(it) }
-        }
+        NotesBox(notes)
     }
     Spacer(Modifier.height(16.dp))
     Text(
@@ -288,6 +278,23 @@ private fun FailedContent(kind: Failure, onRetry: () -> Unit, onClose: () -> Uni
     PrimaryButton(t.updateRetry, onRetry)
     TextButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
         Text(t.close, color = Tokens.TextMuted, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** The scrolling list of notes, shared with the Settings changelog. */
+@Composable
+internal fun NotesBox(notes: List<Note>, maxHeight: Dp = 200.dp) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight)
+            .clip(RoundedCornerShape(Tokens.RadiusCard.dp))
+            .background(Tokens.Surface2)
+            .verticalScroll(rememberScrollState())
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp),
+    ) {
+        notes.forEach { NoteRow(it) }
     }
 }
 

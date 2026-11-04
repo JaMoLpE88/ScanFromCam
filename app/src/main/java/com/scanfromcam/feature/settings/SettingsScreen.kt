@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -36,10 +38,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,11 +57,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.scanfromcam.R
 import com.scanfromcam.core.AppSettings
+import com.scanfromcam.core.Changelog
 import com.scanfromcam.core.Lang
 import com.scanfromcam.core.Strings
 import com.scanfromcam.core.UpdateState
 import com.scanfromcam.core.Updater
+import com.scanfromcam.core.extractNotes
 import com.scanfromcam.core.message
+import com.scanfromcam.feature.updates.NotesBox
 import com.scanfromcam.ui.theme.Tokens
 import com.scanfromcam.ui.deviceHasCredential
 
@@ -73,6 +81,13 @@ fun SettingsScreen(
     val context = LocalContext.current
     val t = Strings.t
     BackHandler { onBack() }
+
+    var changelog by remember { mutableStateOf<Changelog?>(null) }
+    var showChangelog by remember { mutableStateOf(false) }
+    val openChangelog = {
+        changelog = updater.changelog()
+        showChangelog = true
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(Tokens.Surface0)) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
@@ -160,6 +175,8 @@ fun SettingsScreen(
                 Section(t.updates) {
                     UpdateCheckRow(settings = settings, updater = updater)
                     RowDivider()
+                    ChangelogRow(onClick = openChangelog)
+                    RowDivider()
                     ToggleRow(
                         title = t.updateAuto,
                         subtitle = t.updateAutoHint,
@@ -205,7 +222,92 @@ fun SettingsScreen(
                     color = Tokens.TextMuted,
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable(onClick = openChangelog)
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
                 )
+            }
+        }
+
+        if (showChangelog) {
+            ChangelogSheet(
+                changelog = changelog,
+                canCheck = settings.updateConsent == true,
+                onCheck = {
+                    showChangelog = false
+                    updater.checkManually()
+                },
+                onClose = { showChangelog = false },
+            )
+        }
+    }
+}
+
+/** The notes already shown by the update sheet, kept so they can be read again. */
+@Composable
+private fun ChangelogSheet(
+    changelog: Changelog?,
+    canCheck: Boolean,
+    onCheck: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val t = Strings.t
+    BackHandler(onBack = onClose)
+    val notes = remember(changelog?.notes, Strings.lang) {
+        changelog?.let { extractNotes(it.notes, Strings.lang == Lang.ES) }.orEmpty()
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.55f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClose,
+            ),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = Tokens.RadiusSheet.dp, topEnd = Tokens.RadiusSheet.dp))
+                .background(Tokens.Surface1)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                )
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 22.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(t.updateNotes, color = Tokens.TextPrimary, style = MaterialTheme.typography.headlineMedium)
+                changelog?.let {
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        it.version,
+                        color = Tokens.TextMuted,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            if (notes.isEmpty()) {
+                Text(t.updateNotesEmpty, color = Tokens.TextMuted, style = MaterialTheme.typography.bodyMedium)
+                if (canCheck) {
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onCheck) {
+                        Text(t.updateCheck, color = Tokens.AccentMid, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            } else {
+                NotesBox(notes, maxHeight = 400.dp)
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
+                Text(t.close, color = Tokens.TextMuted, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -263,6 +365,23 @@ private fun UpdateCheckRow(settings: AppSettings, updater: Updater) {
         if (checking) {
             Spacer(Modifier.width(12.dp))
             CircularProgressIndicator(color = Tokens.AccentMid, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun ChangelogRow(onClick: () -> Unit) {
+    val t = Strings.t
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(t.updateNotes, color = Tokens.TextPrimary, style = MaterialTheme.typography.titleMedium)
+            Text(t.updateChangelogHint, color = Tokens.TextMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
