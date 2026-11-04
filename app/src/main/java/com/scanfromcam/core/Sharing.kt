@@ -39,6 +39,18 @@ fun openFile(context: Context, file: File, mime: String) {
     runCatching { context.startActivity(intent) }
 }
 
+/**
+ * Hands a downloaded APK to the system installer. The system always asks the user
+ * before replacing the app, so this only opens the installer, it never installs.
+ */
+fun installApk(context: Context, file: File) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(file.contentUri(context), "application/vnd.android.package-archive")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    runCatching { context.startActivity(intent) }
+}
+
 internal fun mimeOf(files: List<File>): String {
     val types = files.map { if (it.extension.equals("pdf", true)) "application/pdf" else "image/jpeg" }
     return types.distinct().singleOrNull() ?: "*/*"

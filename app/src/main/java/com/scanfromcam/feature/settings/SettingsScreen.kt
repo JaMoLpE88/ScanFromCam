@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +54,9 @@ import com.scanfromcam.R
 import com.scanfromcam.core.AppSettings
 import com.scanfromcam.core.Lang
 import com.scanfromcam.core.Strings
+import com.scanfromcam.core.UpdateState
+import com.scanfromcam.core.Updater
+import com.scanfromcam.core.message
 import com.scanfromcam.ui.theme.Tokens
 import com.scanfromcam.ui.deviceHasCredential
 
@@ -61,6 +67,7 @@ private const val REPO_URL = "https://github.com/JaMoLpE88/ScanFromCam"
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
+    updater: Updater,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -150,6 +157,23 @@ fun SettingsScreen(
                     }
                 }
 
+                Section(t.updates) {
+                    UpdateCheckRow(settings = settings, updater = updater)
+                    RowDivider()
+                    ToggleRow(
+                        title = t.updateAuto,
+                        subtitle = t.updateAutoHint,
+                        checked = settings.autoDownload && settings.updateConsent == true,
+                    ) { checked ->
+                        if (checked && settings.updateConsent != true) {
+                            // Turning it on is asking again: the consent sheet answers.
+                            settings.updateConsent = null
+                        } else {
+                            settings.autoDownload = checked
+                        }
+                    }
+                }
+
                 Section(t.about) {
                     LinkRow(
                         title = t.web,
@@ -203,6 +227,43 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
                 .border(1.dp, Tokens.Stroke, RoundedCornerShape(Tokens.RadiusCard.dp)),
             content = content,
         )
+    }
+}
+
+@Composable
+private fun UpdateCheckRow(settings: AppSettings, updater: Updater) {
+    val t = Strings.t
+    val state by updater.state.collectAsState()
+    val current = state
+    val allowed = settings.updateConsent == true
+    val checking = current is UpdateState.Checking
+    val status = when {
+        !allowed -> t.updateDisabled
+        current is UpdateState.Checking -> t.updateChecking
+        current is UpdateState.Available -> "${t.updateAvailable} · ${current.release.version}"
+        current is UpdateState.Downloading -> t.updateDownloading
+        current is UpdateState.Ready -> t.updateReady
+        current is UpdateState.NeedsPermission -> t.updateReady
+        current is UpdateState.Failed && current.manual -> current.kind.message(t)
+        else -> t.updateUpToDate
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !checking) {
+                if (allowed) updater.checkManually() else settings.updateConsent = null
+            }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(t.updateCheck, color = Tokens.TextPrimary, style = MaterialTheme.typography.titleMedium)
+            Text(status, color = Tokens.TextMuted, style = MaterialTheme.typography.bodySmall)
+        }
+        if (checking) {
+            Spacer(Modifier.width(12.dp))
+            CircularProgressIndicator(color = Tokens.AccentMid, modifier = Modifier.size(18.dp))
+        }
     }
 }
 

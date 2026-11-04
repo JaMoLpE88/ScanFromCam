@@ -166,6 +166,49 @@ interface Texts {
     val about: String
     val web: String
     val repository: String
+
+    // Updates.
+    val updates: String
+    val updateCurrent: String
+    val updateCheck: String
+    val updateChecking: String
+    val updateUpToDate: String
+    val updateAvailable: String
+    val updateConsentTitle: String
+    val updateConsentBody: String
+    val updateAllow: String
+    val updateDeny: String
+    val updateDownload: String
+    val updateLater: String
+    val updateDownloading: String
+    val updateReady: String
+    val updateReadyHint: String
+    val updateInstall: String
+    val updateDelete: String
+    val updatePermissionTitle: String
+    val updatePermissionBody: String
+    val updatePermissionLegacy: String
+    val updatePermissionAction: String
+    val updateAuto: String
+    val updateAutoHint: String
+    val updateDisabled: String
+    val updateNotes: String
+    val updateRetry: String
+    val updateErrorNetwork: String
+    val updateErrorRate: String
+    val updateErrorIntegrity: String
+    val updateErrorStorage: String
+    val updateErrorDevice: String
+    fun updateSize(text: String): String
+}
+
+/** One readable line per update failure, in the current language. */
+fun Failure.message(t: Texts): String = when (this) {
+    Failure.Network -> t.updateErrorNetwork
+    Failure.RateLimited -> t.updateErrorRate
+    Failure.Integrity -> t.updateErrorIntegrity
+    Failure.Storage -> t.updateErrorStorage
+    Failure.NoAsset -> t.updateErrorDevice
 }
 
 object Spanish : Texts {
@@ -312,6 +355,44 @@ object Spanish : Texts {
     override val about = "Acerca de"
     override val web = "Web"
     override val repository = "Repositorio"
+
+    override val updates = "Actualizaciones"
+    override val updateCurrent = "Versión actual"
+    override val updateCheck = "Buscar actualizaciones"
+    override val updateChecking = "Buscando…"
+    override val updateUpToDate = "Tienes la última versión"
+    override val updateAvailable = "Nueva versión"
+    override val updateConsentTitle = "¿Buscar actualizaciones?"
+    override val updateConsentBody =
+        "ScanFromCam solo se conecta a github.com para ver si hay una versión nueva. " +
+            "No envía nada tuyo y nada más sale del móvil. Si dices que no, la app no " +
+            "volverá a usar la red."
+    override val updateAllow = "Permitir comprobaciones"
+    override val updateDeny = "Seguir sin conexión"
+    override val updateDownload = "Descargar y actualizar"
+    override val updateLater = "Ahora no"
+    override val updateDownloading = "Descargando la actualización…"
+    override val updateReady = "Lista para instalar"
+    override val updateReadyHint = "El APK se ha descargado y verificado. Android te pedirá confirmar la instalación."
+    override val updateInstall = "Instalar"
+    override val updateDelete = "Borrar la descarga"
+    override val updatePermissionTitle = "Android necesita tu permiso"
+    override val updatePermissionBody =
+        "Para instalar la actualización, permite a ScanFromCam instalar apps desconocidas " +
+            "en los ajustes del móvil. Solo se usa para esto."
+    override val updatePermissionLegacy = "Actívalo en Ajustes → Seguridad → Fuentes desconocidas."
+    override val updatePermissionAction = "Permitir instalación"
+    override val updateAuto = "Descargar sin preguntar"
+    override val updateAutoHint = "Baja la versión nueva en segundo plano y solo pregunta al instalar."
+    override val updateDisabled = "Desactivadas"
+    override val updateNotes = "Novedades"
+    override val updateRetry = "Reintentar"
+    override val updateErrorNetwork = "No se ha podido conectar con GitHub"
+    override val updateErrorRate = "GitHub ha limitado las peticiones. Prueba más tarde"
+    override val updateErrorIntegrity = "El APK descargado no coincide con el publicado"
+    override val updateErrorStorage = "No hay espacio suficiente para la descarga"
+    override val updateErrorDevice = "No hay una versión publicada para este dispositivo"
+    override fun updateSize(text: String) = "$text MB"
 }
 
 object English : Texts {
@@ -458,6 +539,44 @@ object English : Texts {
     override val about = "About"
     override val web = "Web"
     override val repository = "Repository"
+
+    override val updates = "Updates"
+    override val updateCurrent = "Current version"
+    override val updateCheck = "Check for updates"
+    override val updateChecking = "Checking…"
+    override val updateUpToDate = "You're on the latest version"
+    override val updateAvailable = "New version"
+    override val updateConsentTitle = "Look for updates?"
+    override val updateConsentBody =
+        "ScanFromCam only connects to github.com to see if there is a new version. " +
+            "It sends nothing of yours and nothing else leaves the phone. If you say no, " +
+            "the app will not use the network again."
+    override val updateAllow = "Allow checks"
+    override val updateDeny = "Stay offline"
+    override val updateDownload = "Download and update"
+    override val updateLater = "Not now"
+    override val updateDownloading = "Downloading the update…"
+    override val updateReady = "Ready to install"
+    override val updateReadyHint = "The APK was downloaded and verified. Android will ask you to confirm the install."
+    override val updateInstall = "Install"
+    override val updateDelete = "Delete the download"
+    override val updatePermissionTitle = "Android needs your permission"
+    override val updatePermissionBody =
+        "To install the update, let ScanFromCam install unknown apps in the phone settings. " +
+            "It is only used for this."
+    override val updatePermissionLegacy = "Turn it on in Settings → Security → Unknown sources."
+    override val updatePermissionAction = "Allow installs"
+    override val updateAuto = "Download without asking"
+    override val updateAutoHint = "Fetches the new version in the background and only asks when installing."
+    override val updateDisabled = "Off"
+    override val updateNotes = "What's new"
+    override val updateRetry = "Retry"
+    override val updateErrorNetwork = "Couldn't reach GitHub"
+    override val updateErrorRate = "GitHub is rate limiting the requests. Try later"
+    override val updateErrorIntegrity = "The downloaded APK doesn't match the published one"
+    override val updateErrorStorage = "Not enough space for the download"
+    override val updateErrorDevice = "No published version for this device"
+    override fun updateSize(text: String) = "$text MB"
 }
 
 /**

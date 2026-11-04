@@ -6,7 +6,7 @@
   <a href="https://github.com/JaMoLpE88/ScanFromCam"><img alt="Platform" src="https://img.shields.io/badge/platform-Android%207%2B-3DDC84"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
   <img alt="No ads" src="https://img.shields.io/badge/ads-none-brightgreen">
-  <img alt="No network" src="https://img.shields.io/badge/network-none-brightgreen">
+  <img alt="Network: update checks only" src="https://img.shields.io/badge/network-update%20checks%20only-yellowgreen">
   <img alt="No watermark" src="https://img.shields.io/badge/forced%20watermark-none-brightgreen">
 </p>
 
@@ -18,8 +18,8 @@
 
 <p align="center">
   Turn your phone camera into a document scanner: capture, straighten, clean and
-  export to image or searchable PDF. Free, open source, offline, no ads, no
-  accounts, no limits.
+  export to image or searchable PDF. Free, open source, offline by default, no ads,
+  no accounts, no limits.
 </p>
 
 ---
@@ -36,8 +36,9 @@ selectable text layer.
 Saved scans land in the library, where you can group them in folders, move or
 duplicate them between folders and switch between a list and a thumbnail grid.
 
-Everything happens on the device. The app does not even request the
-`INTERNET` permission.
+Everything happens on the device. The only network request the app can make is the
+update check against its own GitHub releases, and only after you allow it; say no
+and it never opens a socket.
 
 <p align="center">
   <img src="docs/images/library.jpg" width="240" alt="Library">
@@ -49,6 +50,15 @@ Everything happens on the device. The app does not even request the
 </p>
 
 ## What's new
+
+**Updates without a store.** ScanFromCam is not on Google Play, so 1.2.0 teaches it
+to update itself. The first launch asks whether the app may look at
+`github.com/JaMoLpE88/ScanFromCam`; if you say yes, every launch checks the latest
+release in the background and stays silent unless there is something new. When
+there is, a sheet shows your version, the new one, what changed and the download
+size; the APK is fetched to the app's cache, checked against the SHA-256 published
+with the release, and handed to the Android installer. *Download without asking*
+in Settings fetches it on its own and only stops to ask for the install.
 
 **Folders and counters.** Group the scans in folders (one level, no nesting).
 The library header counts *every* document on the device, folders included, and
@@ -144,7 +154,9 @@ locks itself again when you leave it.
 
 **Privacy**
 
-- No `INTERNET` permission: the app cannot upload anything, by construction.
+- **No network unless you ask.** The only request the app can make is a JSON read of
+  its own GitHub releases, and only after you allow it on first launch; Settings →
+  Updates turns it off again. There is nothing else to leak to.
 - No accounts, no analytics, no crash reporting, no ad SDK.
 - Documents live in the app's private storage and never leave the device unless
   you share them yourself. Other apps and file managers cannot read them, with
@@ -181,11 +193,12 @@ Settings. More languages are a `Texts` implementation away
 
 Signed APKs are attached to every [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.1.0-arm64-v8a.apk` — phones and tablets (almost every current device).
-- `ScanFromCam-1.1.0-x86_64.apk` — emulators and x86 tablets.
+- `ScanFromCam-1.2.0-arm64-v8a.apk` — phones and tablets (almost every current device).
+- `ScanFromCam-1.2.0-x86_64.apk` — emulators and x86 tablets.
 
 Download the APK and open it on the phone; Android will ask to allow installs from that
-source. No store account, no sign-up.
+source. No store account, no sign-up. From 1.2.0 on, the app updates itself from
+future releases, so you only sideload once.
 
 ## Build
 
@@ -208,9 +221,10 @@ build signed with the debug key:
 
 ## Tests
 
-- `./gradlew :app:testDebugUnitTest` — 55 unit tests: quad geometry and ordering,
+- `./gradlew :app:testDebugUnitTest` — 61 unit tests: quad geometry and ordering,
   quad smoothing, stability window, capture gating, crop handles, rotation,
-  watermark layout, file naming, language detection, share MIME types.
+  watermark layout, file naming, language detection, share MIME types, and the
+  updater (version ordering, APK choice per ABI, release-note extraction, digests).
 - `./gradlew :app:connectedDebugAndroidTest` — 16 instrumented tests: detection on
   synthetic photos, corner refinement, the whole capture → crop → optimize
   pipeline, PDF with and without a text layer, streaming builds of large PDFs,
@@ -229,6 +243,7 @@ app/src/main/java/com/scanfromcam/
     capture/       camera, live detection, auto capture
     editor/        crop, magnifier, finishes, text
     viewer/        read, share, rename, delete
+    updates/       update sheet: consent, notes, progress, install
   ui/              lock gate and shared widgets
   ui/theme/        design tokens
 ```

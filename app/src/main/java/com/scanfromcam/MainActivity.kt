@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.compose.ui.platform.LocalContext
 import com.scanfromcam.di.AppContainer
+import com.scanfromcam.core.UpdateState
 import com.scanfromcam.feature.capture.CaptureScreen
 import com.scanfromcam.feature.editor.EditorScreen
 import com.scanfromcam.feature.format.FormatSheet
@@ -31,6 +33,7 @@ import com.scanfromcam.feature.flow.ScanPhase
 import com.scanfromcam.feature.library.LibraryScreen
 import com.scanfromcam.feature.library.LibraryViewModel
 import com.scanfromcam.feature.settings.SettingsScreen
+import com.scanfromcam.feature.updates.UpdateSheet
 import com.scanfromcam.feature.viewer.ViewerScreen
 import com.scanfromcam.feature.viewer.ViewerViewModel
 import com.scanfromcam.ui.AppLockGate
@@ -68,11 +71,19 @@ private fun AppRoot(container: AppContainer) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) container.appLock.lock()
+            when (event) {
+                Lifecycle.Event.ON_STOP -> container.appLock.lock()
+                // Back from the "install unknown apps" screen: retry the install.
+                Lifecycle.Event.ON_RESUME -> container.updater.refreshInstallPermission()
+                else -> Unit
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
+
+    // Silent: no consent, no recent check or no news means nothing happens here.
+    LaunchedEffect(Unit) { container.updater.checkAutomatic() }
 
     var viewerDocId by remember { mutableStateOf<String?>(null) }
     var showFormat by remember { mutableStateOf(false) }
@@ -112,7 +123,11 @@ private fun AppRoot(container: AppContainer) {
     }
 
         if (showSettings) {
-            SettingsScreen(settings = container.settings, onBack = { showSettings = false })
+            SettingsScreen(
+                settings = container.settings,
+                updater = container.updater,
+                onBack = { showSettings = false },
+            )
         }
         if (showFormat) {
             FormatSheet(
@@ -123,6 +138,21 @@ private fun AppRoot(container: AppContainer) {
                 },
                 onDismiss = { showFormat = false },
             )
+        }
+
+        val updateState by container.updater.state.collectAsState()
+        val consentPending = container.settings.updateConsent == null
+        // The consent sheet also opens over Settings, where the user asks again.
+        val updateVisible = consentPending || (!showSettings && phase == null && docId == null && when (val state = updateState) {
+            is UpdateState.Available,
+            is UpdateState.Downloading,
+            is UpdateState.Ready,
+            is UpdateState.NeedsPermission -> true
+            is UpdateState.Failed -> state.manual
+            else -> false
+        })
+        if (updateVisible) {
+            UpdateSheet(updater = container.updater, settings = container.settings)
         }
     }
 }

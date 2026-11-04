@@ -12,6 +12,8 @@ class ScanFromCamApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        // A downloaded APK only lives while the sheet is on screen.
+        runCatching { container.updater.cleanCache() }
         runCatching { OpenCVLoader.initLocal() }
     }
 }

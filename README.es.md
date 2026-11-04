@@ -6,7 +6,7 @@
   <a href="https://github.com/JaMoLpE88/ScanFromCam"><img alt="Plataforma" src="https://img.shields.io/badge/plataforma-Android%207%2B-3DDC84"></a>
   <a href="LICENSE"><img alt="Licencia" src="https://img.shields.io/badge/licencia-Apache--2.0-blue"></a>
   <img alt="Sin anuncios" src="https://img.shields.io/badge/anuncios-ninguno-brightgreen">
-  <img alt="Sin red" src="https://img.shields.io/badge/red-ninguna-brightgreen">
+  <img alt="Red: solo comprobar actualizaciones" src="https://img.shields.io/badge/red-solo%20actualizaciones-yellowgreen">
   <img alt="Sin marca de agua" src="https://img.shields.io/badge/marca%20de%20agua%20forzada-ninguna-brightgreen">
 </p>
 
@@ -18,8 +18,8 @@
 
 <p align="center">
   Convierte la cámara del móvil en un escáner de documentos: captura, endereza,
-  limpia y exporta a imagen o a PDF con texto. Libre, open source, sin conexión,
-  sin anuncios, sin cuentas y sin límites.
+  limpia y exporta a imagen o a PDF con texto. Libre, open source, sin conexión por
+  defecto, sin anuncios, sin cuentas y sin límites.
 </p>
 
 ---
@@ -36,8 +36,9 @@ por página o como un PDF con capa de texto seleccionable.
 Los escaneos van a la biblioteca, donde puedes agruparlos en carpetas, moverlos o
 duplicarlos entre ellas y alternar entre lista y rejilla de miniaturas.
 
-Todo ocurre en el dispositivo. La app ni siquiera pide el permiso
-`INTERNET`.
+Todo ocurre en el dispositivo. La única petición de red que la app puede hacer es
+la comprobación de actualizaciones contra sus propias releases de GitHub, y solo si
+tú la autorizas; si dices que no, no abre ni un socket.
 
 <p align="center">
   <img src="docs/images/library-es.jpg" width="240" alt="Biblioteca">
@@ -49,6 +50,16 @@ Todo ocurre en el dispositivo. La app ni siquiera pide el permiso
 </p>
 
 ## Novedades
+
+**Actualizaciones sin tienda.** ScanFromCam no está en Google Play, así que la 1.2.0
+le enseña a actualizarse sola. Al primer arranque pregunta si la app puede mirar en
+`github.com/JaMoLpE88/ScanFromCam`; si dices que sí, cada arranque consulta en
+segundo plano la última release y no dice nada salvo que haya novedad. Cuando la
+hay, un panel enseña tu versión, la nueva, las novedades y lo que ocupa la
+descarga; el APK se baja a la caché de la app, se comprueba contra el SHA-256
+publicado con la release y se entrega al instalador de Android. *Descargar sin
+preguntar* en Ajustes lo baja solo y únicamente se detiene para pedir la
+instalación.
 
 **Carpetas y contadores.** Agrupa los escaneos en carpetas (un solo nivel, sin
 subcarpetas). La cabecera de la biblioteca cuenta *todos* los documentos del
@@ -150,7 +161,10 @@ bloquear al salir de ella.
 
 **Privacidad**
 
-- Sin permiso de `INTERNET`: la app no puede subir nada, por construcción.
+- **Sin red salvo que la pidas.** La única petición que la app puede hacer es leer
+  el JSON de sus propias releases de GitHub, y solo si lo autorizas en el primer
+  arranque; Ajustes → Actualizaciones lo vuelve a desactivar. No hay nada más que
+  filtrar.
 - Sin cuentas, sin analítica, sin informes de fallos y sin SDK de anuncios.
 - Los documentos viven en el almacenamiento privado de la app y sólo salen del
   dispositivo si los compartes tú. Otras apps y gestores de archivos no pueden
@@ -187,11 +201,12 @@ Ajustes. Añadir otro idioma es implementar `Texts`
 
 Los APK firmados van adjuntos en cada [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.1.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
-- `ScanFromCam-1.1.0-x86_64.apk` — emuladores y tablets x86.
+- `ScanFromCam-1.2.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
+- `ScanFromCam-1.2.0-x86_64.apk` — emuladores y tablets x86.
 
 Descarga el APK y ábrelo en el móvil; Android pedirá permiso para instalar desde esa
-fuente. Sin cuenta de tienda y sin registro.
+fuente. Sin cuenta de tienda y sin registro. A partir de la 1.2.0 la app se actualiza
+sola desde las releases siguientes, así que solo hay que instalarla a mano una vez.
 
 ## Compilar
 
@@ -214,10 +229,11 @@ instalable rápida, firmada con la clave de debug:
 
 ## Pruebas
 
-- `./gradlew :app:testDebugUnitTest` — 55 tests unitarios: geometría y orden del
+- `./gradlew :app:testDebugUnitTest` — 61 tests unitarios: geometría y orden del
   cuadrilátero, suavizado, ventana de estabilidad, decisión de auto-disparo,
   manejo del recorte, rotación, maquetación de la marca de agua, nombres de
-  fichero, detección de idioma y tipos MIME al compartir.
+  fichero, detección de idioma, tipos MIME al compartir y el actualizador (orden de
+  versiones, elección del APK por ABI, extracción de novedades y digests).
 - `./gradlew :app:connectedDebugAndroidTest` — 16 tests instrumentados: detección
   sobre fotos sintéticas, refinado de esquinas, el pipeline completo de captura,
   recorte y optimización, PDF con y sin capa de texto, PDFs grandes en streaming
@@ -236,6 +252,7 @@ app/src/main/java/com/scanfromcam/
     capture/       cámara, detección en vivo, auto-disparo
     editor/        recorte, lupa, acabados, texto
     viewer/        leer, compartir, renombrar, borrar
+    updates/       panel de actualización: permiso, novedades, progreso, instalar
   ui/              pantalla de bloqueo y widgets compartidos
   ui/theme/        tokens de diseño
 ```
