@@ -1,5 +1,6 @@
 package com.scanfromcam.feature.flow
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -143,6 +144,14 @@ class ScanFlowViewModel(
         }
     }
 
+    /**
+     * Stores an optimised page. A sheet without colour is written in one
+     * channel: same picture, smaller file, and the flat look of a scan.
+     */
+    private fun saveOptimized(bitmap: Bitmap, file: File) {
+        if (!Cv.savePageJpeg(bitmap, file, 88)) Images.saveJpeg(bitmap, file, 88)
+    }
+
     /** Renders the Optimizar version of [page] into a temp file, or null if it cannot. */
     private suspend fun optimizedFileFor(page: PageDraft): String? = withContext(Dispatchers.Default) {
         val source = Images.decodeUpright(File(page.originalPath), maxSide = MAX_CAPTURE_SIDE)
@@ -151,7 +160,7 @@ class ScanFlowViewModel(
             val enhanced = Cv.optimize(source)
             try {
                 val target = repository.newTempPageFile()
-                Images.saveJpeg(enhanced, target, 88)
+                saveOptimized(enhanced, target)
                 tempFiles.add(target)
                 target.absolutePath
             } finally {
@@ -385,7 +394,7 @@ class ScanFlowViewModel(
                 val enhanced = Cv.optimize(cropped)
                 try {
                     val tmp = File(path + TMP_SUFFIX)
-                    Images.saveJpeg(enhanced, tmp, 88)
+                    saveOptimized(enhanced, tmp)
                     optimizedTmp = tmp
                 } finally {
                     enhanced.recycle()
@@ -426,7 +435,7 @@ class ScanFlowViewModel(
                     } else {
                         val rotated = Images.rotate(optimized, page.rotation.toFloat())
                         val target = repository.newTempPageFile()
-                        Images.saveJpeg(rotated, target, 88)
+                        saveOptimized(rotated, target)
                         if (rotated !== optimized) optimized.recycle()
                         rotated.recycle()
                         tempFiles.add(target)

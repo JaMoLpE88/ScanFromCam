@@ -27,7 +27,7 @@
 ## Qué hace
 
 Apuntas la cámara a un folio. ScanFromCam encuentra sus cuatro esquinas, espera
-a que el encuadre esté quieto antes de disparar y te deja la página en un lienzo
+a que el encuadre esté quieto y el texto enfocado antes de disparar, y te deja la página en un lienzo
 oscuro donde puedes corregir el recorte, girarla, reconocer su texto y elegir el
 acabado: **Original** (tal cual se capturó) u **Optimizar** (limpio como un
 escaneo real). Las páginas se apilan en un documento que se guarda como un JPG
@@ -50,6 +50,26 @@ tú la autorizas; si dices que no, no abre ni un socket.
 </p>
 
 ## Novedades
+
+**Dispara cuando la página está enfocada.** El auto-disparo ya no mira solo si el
+móvil está quieto: ahora mide también lo nítida que se lee la página. Mientras el
+texto sale blando, la tira dice *Enfoca el documento* y el obturador espera, así
+que la foto que se guarda es la que estaba a foco en pantalla. Una hoja en blanco
+nunca se descarta por no tener nada escrito, y el disparo manual nunca se bloquea.
+
+**El lado que arrastras se posa en el borde real.** Al soltar un lado en el editor
+de recorte, busca el borde que hay debajo, unos píxeles a cada lado, y se coloca
+encima. Gana la mediana de lo que encuentra, así que una mota oscura no arrastra el
+recorte.
+
+**Las páginas en blanco y negro pesan menos.** Cuando la página no tiene color que
+conservar —tinta sobre papel, sin sello ni firma— la versión optimizada se guarda
+en un solo canal: la misma imagen, alrededor de un tercio menos de bytes y el
+aspecto plano de un escaneo. Lo que tiene color conserva los tres canales.
+
+**Papel más plano alrededor de la tinta.** El mapa de iluminación se estima ahora
+quitando la escritura de la estimación, lo que borra el halo gris que rodeaba las
+letras y suaviza las sombras de arrugas sin comerse el detalle.
 
 **Actualizaciones sin tienda.** ScanFromCam no está en Google Play, así que la 1.2.0
 le enseña a actualizarse sola. Al primer arranque pregunta si la app puede mirar en
@@ -129,14 +149,16 @@ bloquear al salir de ella.
   suavizado por esquina que no tiembla.
 - Auto-disparo: el marco se pone verde cuando la página está encuadrada y con
   cobertura suficiente, espera la demora que elijas (0–3 s) y dispara. Se pausa
-  mientras el móvil se mueve, así que nunca hace una foto borrosa.
+  mientras el móvil se mueve y mientras la página se lee blanda, así que nunca
+  hace una foto borrosa.
 - Obturador manual siempre disponible; el beep y el sonido de obturador se
   pueden apagar.
 
 **Edición**
 
 - Recorte con cuatro vértices o arrastrando un lado entero, moviendo el borde que
-  corresponde, con una lupa de 2,5× que sigue al dedo.
+  corresponde, con una lupa de 2,5× que sigue al dedo. Un lado que sueltas cerca
+  del borde se coloca encima.
 - Rotar, retomar, añadir más páginas y quitar las que no quieras.
 - Original / Optimizar por página, calculado al pedirlo para que el editor abra
   al instante.
@@ -144,7 +166,8 @@ bloquear al salir de ella.
 
 **Optimizar** — el pase de foto a escaneo, en este orden:
 
-1. estimar la iluminación de la escena y dividirla;
+1. estimar la iluminación de la escena (quitando la escritura de la estimación) y
+   dividirla;
 2. fijar el negro y el blanco al papel y la tinta de esta página, lo que además
    neutraliza la dominante de color;
 3. estirar la curva de tonos, recuperar altas luces y afilar sólo donde hay un
@@ -165,6 +188,8 @@ bloquear al salir de ella.
 
 - Un JPG por página, o un PDF cuya capa de texto es realmente seleccionable y
   buscable (texto invisible sobre la imagen).
+- Las páginas sin color se guardan en un solo canal: una hoja de letra negra ocupa
+  alrededor de un tercio menos que la misma página en color.
 - Nombrar el documento, compartirlo (uno o varios a la vez), renombrarlo, abrir
   el PDF y borrarlo.
 
@@ -217,8 +242,8 @@ Ajustes. Añadir otro idioma es implementar `Texts`
 
 Los APK firmados van adjuntos en cada [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.2.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
-- `ScanFromCam-1.2.0-x86_64.apk` — emuladores y tablets x86.
+- `ScanFromCam-1.3.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
+- `ScanFromCam-1.3.0-x86_64.apk` — emuladores y tablets x86.
 
 Descarga el APK y ábrelo en el móvil; Android pedirá permiso para instalar desde esa
 fuente. Sin cuenta de tienda y sin registro. A partir de la 1.2.0 la app se actualiza
@@ -252,15 +277,18 @@ instalable rápida, firmada con la clave de debug:
 
 ## Pruebas
 
-- `./gradlew :app:testDebugUnitTest` — 61 tests unitarios: geometría y orden del
-  cuadrilátero, suavizado, ventana de estabilidad, decisión de auto-disparo,
-  manejo del recorte, rotación, maquetación de la marca de agua, nombres de
-  fichero, detección de idioma, tipos MIME al compartir y el actualizador (orden de
+- `./gradlew :app:testDebugUnitTest` — 68 tests unitarios: geometría y orden del
+  cuadrilátero, suavizado, ventana de estabilidad, decisión de auto-disparo
+  (encuadre, cobertura, movimiento y enfoque), el umbral de nitidez, manejo del
+  recorte, rotación, maquetación de la marca de agua, nombres de fichero,
+  detección de idioma, tipos MIME al compartir y el actualizador (orden de
   versiones, elección del APK por ABI, extracción de novedades y digests).
-- `./gradlew :app:connectedDebugAndroidTest` — 16 tests instrumentados: detección
-  sobre fotos sintéticas, refinado de esquinas, el pipeline completo de captura,
-  recorte y optimización, PDF con y sin capa de texto, PDFs grandes en streaming
-  y carpetas (mover, copiar y borrar con su contenido).
+- `./gradlew :app:connectedDebugAndroidTest` — 21 tests instrumentados: detección
+  sobre fotos sintéticas, refinado de esquinas, lo nítida que se lee una página y
+  lo blanda que tiene que estar para rechazarse, un lado que se posa en su borde,
+  el guardado de página en un canal, el pipeline completo de captura, recorte y
+  optimización, PDF con y sin capa de texto, PDFs grandes en streaming y carpetas
+  (mover, copiar y borrar).
 
 ## Estructura
 
@@ -289,7 +317,14 @@ app/src/main/java/com/scanfromcam/
   folio se ve entero.
 - **Rectificación**: ajuste de mínimos cuadrados por lado, re-intersección de las
   cuatro rectas y deformación de perspectiva con prefiltro al reducir, para que
-  los trazos finos no hagan aliasing.
+  los trazos finos no hagan aliasing. Un lado que se suelta en el editor busca el
+  borde más fuerte a unos píxeles y se coloca encima, con la mediana de lo que
+  muestrea, así que una mota oscura no arrastra el recorte.
+- **Enfoque** (`data/Focus.kt`): la energía del Laplaciano de la página comparada
+  con su propia energía de borde. Juzgar cualquiera de las dos por separado no
+  sirve: mucha letra puntúa alto aunque esté blanda, y una hoja en blanco puntúa
+  casi cero por muy buenas que sean las ópticas; decide el cociente, y una página
+  sin energía de borde ninguna queda exenta.
 - **Optimizar**: el pase de iluminación / punto blanco / contraste local / croma
   descrito arriba.
 - **OCR**: reconocimiento de texto de ML Kit en el dispositivo y capa de texto

@@ -39,8 +39,11 @@ class UpdaterTest {
     @Test
     fun `notes come from the section of the current language`() {
         val body = RELEASE_BODY
-        assertEquals("• Recorte más rápido", extractNotes(body, spanish = true))
-        assertEquals("• Faster crop\n• PDF fix", extractNotes(body, spanish = false))
+        assertEquals(listOf(Note(null, "Recorte más rápido")), extractNotes(body, spanish = true))
+        assertEquals(
+            listOf(Note("Faster", "crop"), Note(null, "PDF fix")),
+            extractNotes(body, spanish = false),
+        )
     }
 
     @Test
@@ -51,11 +54,33 @@ class UpdaterTest {
             ## What's new in 1.3.0
             - One fix
         """.trimIndent()
-        assertEquals("• One fix", extractNotes(body, spanish = true))
+        assertEquals(listOf(Note(null, "One fix")), extractNotes(body, spanish = true))
     }
 
     @Test
-    fun `no notes is an empty string, never a table`() {
+    fun `bold leads and italics leave no asterisks behind`() {
+        val body = """
+            ## Novedades de 1.3.0
+
+            - **Dispara solo si está enfocado**: la tira dice *Enfoca el documento* y el obturador espera.
+            - **Páginas en gris**: un tercio menos de bytes.
+            - El registro de sesión no cambia.
+        """.trimIndent()
+        assertEquals(
+            listOf(
+                Note(
+                    "Dispara solo si está enfocado",
+                    "la tira dice Enfoca el documento y el obturador espera.",
+                ),
+                Note("Páginas en gris", "un tercio menos de bytes."),
+                Note(null, "El registro de sesión no cambia."),
+            ),
+            extractNotes(body, spanish = true),
+        )
+    }
+
+    @Test
+    fun `no notes is empty, never a table`() {
         val body = """
             # ScanFromCam 1.3.0
 
@@ -64,8 +89,8 @@ class UpdaterTest {
             | a.apk | phones |
         """.trimIndent()
         val notes = extractNotes(body, spanish = false)
-        assertFalse(notes.contains("|"))
-        assertEquals("ScanFromCam 1.3.0", notes)
+        assertTrue(notes.none { it.text.contains("|") })
+        assertEquals(listOf(Note(null, "ScanFromCam 1.3.0")), notes)
     }
 
     @Test

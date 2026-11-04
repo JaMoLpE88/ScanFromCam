@@ -4,10 +4,11 @@ package com.scanfromcam.feature.capture.detection
  * Decides when an automatic capture is allowed: the document must stay framed
  * for [holdMs] before the shutter fires, so the user has time to line it up.
  *
- * Two extra facts gate the same decision: the page must cover enough of the
- * frame (otherwise the crop would be tiny and upscaled), and the phone must be
+ * Three extra facts gate the same decision: the page must cover enough of the
+ * frame (otherwise the crop would be tiny and upscaled), the phone must be
  * still (otherwise the photo is blurred and the quad the preview showed is no
- * longer where the page is).
+ * longer where the page is), and the page itself must already read as focused,
+ * because a frame that looks soft now is the frame that would be stored.
  */
 class AutoCaptureGate(private val holdMs: Long = 3_000L) {
 
@@ -29,8 +30,9 @@ class AutoCaptureGate(private val holdMs: Long = 3_000L) {
         autoEnabled: Boolean,
         covered: Boolean = true,
         deviceStable: Boolean = true,
+        sharp: Boolean = true,
     ): State {
-        val ready = framed && covered && deviceStable
+        val ready = framed && covered && deviceStable && sharp
         if (!ready) {
             framedSince = null
             return State(framed = framed && covered, remainingSeconds = 0, shouldCapture = false)

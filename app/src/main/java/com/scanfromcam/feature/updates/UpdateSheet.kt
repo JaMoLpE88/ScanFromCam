@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -44,6 +46,7 @@ import com.scanfromcam.core.AppSettings
 import com.scanfromcam.core.DownloadProgress
 import com.scanfromcam.core.Failure
 import com.scanfromcam.core.Lang
+import com.scanfromcam.core.Note
 import com.scanfromcam.core.Strings
 import com.scanfromcam.core.UpdateState
 import com.scanfromcam.core.Updater
@@ -175,7 +178,7 @@ private fun AvailableContent(
     val notes = remember(release.notes, Strings.lang) {
         extractNotes(release.notes, Strings.lang == Lang.ES)
     }
-    if (notes.isNotBlank()) {
+    if (notes.isNotEmpty()) {
         Spacer(Modifier.height(18.dp))
         Text(
             t.updateNotes.uppercase(),
@@ -186,13 +189,14 @@ private fun AvailableContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 176.dp)
+                .heightIn(max = 200.dp)
                 .clip(RoundedCornerShape(Tokens.RadiusCard.dp))
                 .background(Tokens.Surface2)
                 .verticalScroll(rememberScrollState())
                 .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp),
         ) {
-            Text(notes, color = Tokens.TextPrimary, style = MaterialTheme.typography.bodySmall)
+            notes.forEach { NoteRow(it) }
         }
     }
     Spacer(Modifier.height(16.dp))
@@ -284,6 +288,39 @@ private fun FailedContent(kind: Failure, onRetry: () -> Unit, onClose: () -> Uni
     PrimaryButton(t.updateRetry, onRetry)
     TextButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
         Text(t.close, color = Tokens.TextMuted, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** One release note: a dot, the bold lead-in and the sentence that follows it. */
+@Composable
+private fun NoteRow(note: Note) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .size(5.dp)
+                .clip(CircleShape)
+                .background(Tokens.AccentMid),
+        )
+        Spacer(Modifier.width(10.dp))
+        Column {
+            note.title?.let {
+                Text(
+                    it,
+                    color = Tokens.TextPrimary,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (note.text.isNotEmpty()) Spacer(Modifier.height(2.dp))
+            }
+            if (note.text.isNotEmpty()) {
+                Text(
+                    note.text,
+                    color = if (note.title == null) Tokens.TextPrimary else Tokens.TextMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
     }
 }
 

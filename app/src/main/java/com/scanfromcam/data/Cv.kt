@@ -1,18 +1,24 @@
 package com.scanfromcam.data
 
 import android.graphics.Bitmap
+import com.scanfromcam.domain.geometry.CropHandles
 import com.scanfromcam.domain.geometry.Quads
 import com.scanfromcam.domain.model.Point
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.MatOfDouble
+import org.opencv.core.MatOfInt
 import org.opencv.core.MatOfPoint
 import org.opencv.core.MatOfPoint2f
 import org.opencv.core.Point as CvPoint
+import org.opencv.core.Rect
 import org.opencv.core.Scalar
 import org.opencv.core.Size
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
+import java.io.File
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -36,6 +42,24 @@ object Cv {
     private const val ANALYSIS_SIDE = 640.0
     private const val OUTPUT_MAX_SIDE = 2600.0
     private const val MIN_QUAD_AREA = 0.02f
+
+    /** Side of the patch that [measureFocus] analyses; bigger costs time, smaller loses detail. */
+    private const val FOCUS_SIDE = 480.0
+
+    /** How far a side may travel to reach its edge, as a share of the shortest image side. */
+    private const val SNAP_BAND = 0.045f
+
+    /** Points sampled along a side when looking for the line under it. */
+    private const val SNAP_SAMPLES = 24
+
+    /** Gradient (8 bit) that counts as a real edge when snapping a side. */
+    private const val SNAP_MIN_EDGE = 26.0
+
+    /** Channel spread that separates colour from black and white printing. */
+    private const val CHROMA_LIMIT = 14.0
+
+    /** Share of coloured pixels below which a page is worth storing in one channel. */
+    private const val COLOUR_SHARE = 0.004f
 
     private const val MIN_AREA_RATIO = 0.10
     private const val MAX_AREA_RATIO = 0.97
@@ -640,6 +664,220 @@ object Cv {
         }
     }
 
+    /**
+     * Focus of one frame. When [quad] is known the measurement is taken inside
+     * it, so a sharp desk around a blurred page cannot pass for a sharp page;
+     * the outer rim is left out because the border of the sheet is a strong
+     * edge that would keep a blurred page looking crisp.
+     */
+    fun measureFocus(gray: Mat, quad: List<Point>? = null): Focus {
+        val patch = Mat(gray, focusRegion(gray, quad))
+        val work = Mat()
+        val laplacian = Mat()
+        val lapMean = MatOfDouble()
+        val lapDeviation = MatOfDouble()
+        val edgeMean = MatOfDouble()
+        val edgeDeviation = MatOfDouble()
+        var edges: Mat? = null
+        try {
+            val scale = min(1.0, FOCUS_SIDE / max(1, max(patch.cols(), patch.rows())).toDouble())
+            if (scale < 1.0) {
+                Imgproc.resize(patch, work, Size(), scale, scale, Imgproc.INTER_AREA)
+            } else {
+                patch.copyTo(work)
+            }
+
+            Imgproc.Laplacian(work, laplacian, CvType.CV_64F, 3)
+            Core.meanStdDev(laplacian, lapMean, lapDeviation)
+
+            // Edge energy of the same patch: what the page has to lose when it
+            // is soft, and the only reliable sign that it has nothing at all.
+            val magnitude = gradientMagnitude(work)
+            edges = magnitude
+            Core.meanStdDev(magnitude, edgeMean, edgeDeviation)
+
+            val lapSpread = lapDeviation.get(0, 0)[0]
+            val edgeSpread = edgeDeviation.get(0, 0)[0]
+            return Focus(sharpness = lapSpread * lapSpread, detail = edgeSpread * edgeSpread)
+        } finally {
+            patch.release()
+            work.release()
+            laplacian.release()
+            lapMean.release()
+            lapDeviation.release()
+            edgeMean.release()
+            edgeDeviation.release()
+            edges?.release()
+        }
+    }
+
+    /**
+     * Moves one side of [quad] onto the strongest edge close to it. Sides are
+     * axis locked in the editor, so the whole side travels along its own normal
+     * and the median of what the samples see wins: a single dark speck cannot
+     * drag the crop. Returns null when the image has no clear line there.
+     */
+    fun snapSide(gray: Mat, quad: List<Point>, side: Int, band: Float = SNAP_BAND): List<Point>? {
+        if (quad.size != 4) return null
+        val width = gray.cols()
+        val height = gray.rows()
+        if (width < 8 || height < 8) return null
+
+        val horizontal = side == 0 || side == 2
+        val reach = max(2, (band * if (horizontal) height else width).toInt())
+        val magnitude = gradientMagnitude(gray)
+        val edges = Mat()
+        try {
+            magnitude.convertTo(edges, CvType.CV_8U)
+
+            val a = quad[side]
+            val b = quad[(side + 1) % 4]
+            val ax = a.x * width
+            val ay = a.y * height
+            val bx = b.x * width
+            val by = b.y * height
+
+            val offsets = ArrayList<Float>(SNAP_SAMPLES)
+            for (sample in 1..SNAP_SAMPLES) {
+                val t = sample.toFloat() / (SNAP_SAMPLES + 1)
+                val px = ax + (bx - ax) * t
+                val py = ay + (by - ay) * t
+                var bestOffset = 0f
+                var bestValue = 0.0
+                for (step in -reach..reach) {
+                    val x = (px + if (horizontal) 0f else step.toFloat()).toInt()
+                    val y = (py + if (horizontal) step.toFloat() else 0f).toInt()
+                    if (x < 0 || y < 0 || x >= width || y >= height) continue
+                    val value = edges.get(y, x)[0]
+                    if (value > bestValue) {
+                        bestValue = value
+                        bestOffset = step.toFloat()
+                    }
+                }
+                if (bestValue >= SNAP_MIN_EDGE) offsets.add(bestOffset)
+            }
+            if (offsets.size * 2 < SNAP_SAMPLES) return null
+
+            val shift = medianOf(offsets)
+            if (abs(shift) < 1.5f) return null
+
+            val normalised = shift / (if (horizontal) height else width)
+            return CropHandles.moveSide(
+                points = quad,
+                side = side,
+                dx = if (horizontal) 0f else normalised,
+                dy = if (horizontal) normalised else 0f,
+            )
+        } finally {
+            magnitude.release()
+            edges.release()
+        }
+    }
+
+    /** Grayscale copy of [source], for the editors that work on the full image. */
+    fun grayscale(source: Bitmap): Mat {
+        val rgba = Mat()
+        try {
+            Utils.bitmapToMat(source, rgba)
+            val gray = Mat()
+            Imgproc.cvtColor(rgba, gray, Imgproc.COLOR_RGBA2GRAY)
+            return gray
+        } finally {
+            rgba.release()
+        }
+    }
+
+    /**
+     * Writes a page as JPEG. A sheet with no colour worth keeping goes out in
+     * one channel: the same picture, roughly a third fewer bytes and the flat
+     * look of a scan. Returns false so the caller can store it as it is.
+     */
+    fun savePageJpeg(source: Bitmap, file: File, quality: Int): Boolean {
+        val rgba = Mat()
+        val rgb = Mat()
+        try {
+            Utils.bitmapToMat(source, rgba)
+            Imgproc.cvtColor(rgba, rgb, Imgproc.COLOR_RGBA2RGB)
+            if (!isAchromatic(rgb)) return false
+
+            val gray = Mat()
+            val options = MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, quality)
+            try {
+                Imgproc.cvtColor(rgb, gray, Imgproc.COLOR_RGB2GRAY)
+                file.parentFile?.mkdirs()
+                return Imgcodecs.imwrite(file.absolutePath, gray, options)
+            } finally {
+                gray.release()
+                options.release()
+            }
+        } catch (_: Throwable) {
+            return false
+        } finally {
+            rgba.release()
+            rgb.release()
+        }
+    }
+
+    /** True when almost every pixel is grey: black type on white paper. */
+    private fun isAchromatic(rgb: Mat): Boolean {
+        val channels = ArrayList<Mat>(3)
+        Core.split(rgb, channels)
+        val highest = Mat()
+        val lowest = Mat()
+        val chroma = Mat()
+        val coloured = Mat()
+        try {
+            Core.max(channels[0], channels[1], highest)
+            Core.max(highest, channels[2], highest)
+            Core.min(channels[0], channels[1], lowest)
+            Core.min(lowest, channels[2], lowest)
+            Core.subtract(highest, lowest, chroma)
+            Imgproc.threshold(chroma, coloured, CHROMA_LIMIT, 255.0, Imgproc.THRESH_BINARY)
+            val pixels = max(1, chroma.cols() * chroma.rows())
+            val share = Core.countNonZero(coloured).toFloat() / pixels
+            return share < COLOUR_SHARE
+        } finally {
+            channels.forEach { runCatching { it.release() } }
+            highest.release()
+            lowest.release()
+            chroma.release()
+            coloured.release()
+        }
+    }
+
+    private fun focusRegion(gray: Mat, quad: List<Point>?): Rect {
+        val width = gray.cols()
+        val height = gray.rows()
+        if (quad == null || quad.size != 4) return Rect(0, 0, width, height)
+
+        val (low, high) = Quads.bounds(quad)
+        val left = (low.x * width).toInt().coerceIn(0, width - 1)
+        val top = (low.y * height).toInt().coerceIn(0, height - 1)
+        val right = (high.x * width).toInt().coerceIn(left + 1, width)
+        val bottom = (high.y * height).toInt().coerceIn(top + 1, height)
+
+        val marginX = ((right - left) * 0.06).toInt()
+        val marginY = ((bottom - top) * 0.06).toInt()
+        val cropWidth = right - left - 2 * marginX
+        val cropHeight = bottom - top - 2 * marginY
+        return if (cropWidth < 16 || cropHeight < 16) {
+            Rect(left, top, right - left, bottom - top)
+        } else {
+            Rect(left + marginX, top + marginY, cropWidth, cropHeight)
+        }
+    }
+
+    private fun medianOf(values: List<Float>): Float {
+        if (values.isEmpty()) return 0f
+        val sorted = values.sorted()
+        val middle = sorted.size / 2
+        return if (sorted.size % 2 == 1) {
+            sorted[middle]
+        } else {
+            (sorted[middle - 1] + sorted[middle]) / 2f
+        }
+    }
+
     private fun enhanceDocument(rgb: Mat): Mat {
         // 1. Illumination flattening, driven by the luminance channel only.
         //    The background is a smooth float estimate: doing it in 8 bits is
@@ -850,12 +1088,20 @@ object Cv {
      * Paper illumination map at 1/8 size. A smooth Gaussian estimate over a
      * float image follows lamp falloff and soft shadows without quantisation
      * steps, and the cubic upscale keeps it free of block edges.
+     *
+     * Writing is removed from the map before it is smoothed: ink is darker than
+     * the sheet and, left in, it drags the estimate down to the stroke, which
+     * shows up later as a grey halo around every letter. Replacing the ink with
+     * the coarse estimate first keeps the gain flat across the page, and the
+     * edge aware pass then smooths the shadow boundary without rounding off the
+     * step that makes it visible.
      */
     private fun paperBackground(luminance: Mat): Mat {
         val width = luminance.cols()
         val height = luminance.rows()
         val smallWidth = max(24, width / 8)
         val smallHeight = max(24, height / 8)
+        val smallSide = max(smallWidth, smallHeight)
 
         val source = Mat()
         luminance.convertTo(source, CvType.CV_32F, 1.0 / 255.0)
@@ -869,18 +1115,33 @@ object Cv {
             Imgproc.INTER_AREA,
         )
         source.release()
-        Imgproc.GaussianBlur(small, small, Size(0.0, 0.0), max(smallWidth, smallHeight) / 10.0)
+
+        val coarse = Mat()
+        Imgproc.GaussianBlur(small, coarse, Size(0.0, 0.0), smallSide / 10.0)
+
+        val inkLimit = Mat()
+        Core.multiply(coarse, Scalar(0.80), inkLimit)
+        val ink = Mat()
+        Core.compare(small, inkLimit, ink, Core.CMP_LT)
+        inkLimit.release()
+        coarse.copyTo(small, ink)
+        ink.release()
+
+        val smooth = Mat()
+        Imgproc.bilateralFilter(small, smooth, 9, 0.05, 9.0)
+        coarse.release()
+        small.release()
 
         val background = Mat()
         Imgproc.resize(
-            small,
+            smooth,
             background,
             Size(width.toDouble(), height.toDouble()),
             0.0,
             0.0,
             Imgproc.INTER_CUBIC,
         )
-        small.release()
+        smooth.release()
         val floor = Mat(background.size(), background.type(), Scalar(0.05))
         Core.max(background, floor, background)
         floor.release()

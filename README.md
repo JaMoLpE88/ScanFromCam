@@ -26,8 +26,8 @@
 
 ## What it does
 
-Point the camera at a sheet of paper. ScanFromCam finds its four corners, keeps
-the frame steady until the shot is safe, and gives you the page on a dark canvas
+Point the camera at a sheet of paper. ScanFromCam finds its four corners, waits
+until the frame is steady and the text is in focus, and gives you the page on a dark canvas
 where you can fix the crop, rotate it, recognise its text and pick the finish:
 **Original** (as captured) or **Optimize** (cleaned like a real scan). Pages
 stack into a document you can save as one JPG per page or as a PDF with a
@@ -50,6 +50,25 @@ and it never opens a socket.
 </p>
 
 ## What's new
+
+**It shoots when the page is in focus.** Auto capture used to check only that the
+phone was still; now it also measures how crisp the page reads. While the text
+looks soft the strip says *Focus the document* and the shutter waits, so the photo
+that gets stored is the one that was in focus on screen. A blank sheet is never
+blamed for having nothing written on it, and the manual shutter is never blocked.
+
+**The side you drag settles on the real edge.** Let go of a side in the crop editor
+and it looks for the border under it, a few pixels either way, and moves onto it.
+The median of what it finds wins, so one dark speck cannot drag the crop.
+
+**Black and white pages weigh less.** When a page has no colour worth keeping —
+type on paper, no stamp, no signature — the optimized version is stored in one
+channel: same picture, around a third fewer bytes, and the flat look of a scan.
+Anything with colour keeps all three.
+
+**Flatter paper around the ink.** The illumination map is now estimated with the
+writing taken out of it, which removes the grey halo that used to hug the letters
+and softens wrinkle shadows without eating the detail.
 
 **Updates without a store.** ScanFromCam is not on Google Play, so 1.2.0 teaches it
 to update itself. The first launch asks whether the app may look at
@@ -124,21 +143,23 @@ locks itself again when you leave it.
 - Live edge detection on the full camera frame, with a corner-smoothed quad that
   does not jitter.
 - Auto capture: the frame turns green when the page is framed and covered, waits
-  the delay you choose (0–3 s) and shoots. It pauses while the phone moves, so it
-  never takes a blurred photo.
+  the delay you choose (0–3 s) and shoots. It pauses while the phone moves and
+  while the page reads as soft, so it never takes a blurred photo.
 - Manual shutter always available; beep and shutter sound can be turned off.
 
 **Edit**
 
 - Crop with four corner handles or by dragging a whole side, both moving the
-  edge it belongs to, with a 2.5× magnifier that follows your finger.
+  edge it belongs to, with a 2.5× magnifier that follows your finger. A side
+  released near a border settles onto it.
 - Rotate, retake, add more pages, remove the ones you do not want.
 - Original / Optimize per page, computed on demand so the editor opens instantly.
 - Text extraction on device, then copy the text or keep it for the PDF.
 
 **Optimize** — the photo-to-scan pass, in this order:
 
-1. estimate the room illumination and divide it out;
+1. estimate the room illumination, with the writing taken out of the estimate,
+   and divide it out;
 2. pin the black and white points to this page's ink and paper, which also
    neutralises a colour cast;
 3. stretch the tone curve, lift the highlights and sharpen only where there is
@@ -158,6 +179,8 @@ locks itself again when you leave it.
 
 - One JPG per page, or a PDF whose text layer is really selectable and
   searchable (invisible text drawn over the image).
+- Pages without colour are stored in one channel, so a sheet of black type takes
+  about a third fewer bytes than the same page in full colour.
 - Name the document, share it (one or several at once), rename it, open the PDF,
   delete it.
 
@@ -209,8 +232,8 @@ Settings. More languages are a `Texts` implementation away
 
 Signed APKs are attached to every [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.2.0-arm64-v8a.apk` — phones and tablets (almost every current device).
-- `ScanFromCam-1.2.0-x86_64.apk` — emulators and x86 tablets.
+- `ScanFromCam-1.3.0-arm64-v8a.apk` — phones and tablets (almost every current device).
+- `ScanFromCam-1.3.0-x86_64.apk` — emulators and x86 tablets.
 
 Download the APK and open it on the phone; Android will ask to allow installs from that
 source. No store account, no sign-up. From 1.2.0 on, the app updates itself from
@@ -244,14 +267,16 @@ build signed with the debug key:
 
 ## Tests
 
-- `./gradlew :app:testDebugUnitTest` — 61 unit tests: quad geometry and ordering,
-  quad smoothing, stability window, capture gating, crop handles, rotation,
-  watermark layout, file naming, language detection, share MIME types, and the
-  updater (version ordering, APK choice per ABI, release-note extraction, digests).
-- `./gradlew :app:connectedDebugAndroidTest` — 16 instrumented tests: detection on
-  synthetic photos, corner refinement, the whole capture → crop → optimize
-  pipeline, PDF with and without a text layer, streaming builds of large PDFs,
-  and folders (move, copy, delete with content).
+- `./gradlew :app:testDebugUnitTest` — 68 unit tests: quad geometry and ordering,
+  quad smoothing, stability window, capture gating (frame, coverage, movement and
+  focus), the focus threshold, crop handles, rotation, watermark layout, file
+  naming, language detection, share MIME types, and the updater (version ordering,
+  APK choice per ABI, release-note extraction, digests).
+- `./gradlew :app:connectedDebugAndroidTest` — 21 instrumented tests: detection on
+  synthetic photos, corner refinement, how crisp a page reads and how soft it has
+  to be to be refused, a side settling onto its border, page storage in one
+  channel, the whole capture → crop → optimize pipeline, PDF with and without a
+  text layer, streaming builds of large PDFs, and folders (move, copy, delete).
 
 ## Project layout
 
@@ -279,7 +304,13 @@ app/src/main/java/com/scanfromcam/
   rejected because a sheet is fully inside the frame.
 - **Rectification**: total-least-squares line fit per side, re-intersection of
   the four lines, then a perspective warp with a prefilter when shrinking so
-  thin strokes do not alias.
+  thin strokes do not alias. A side released in the editor looks for the
+  strongest border within a few pixels and moves onto it, by the median of what
+  it samples, so one dark speck cannot drag the crop.
+- **Focus** (`data/Focus.kt`): the Laplacian energy of the page compared with its
+  own edge energy. Judging either alone does not work — a lot of print still scores
+  high when soft, and a blank sheet scores near zero however crisp the optics are —
+  so the ratio is what decides, and a page with no edge energy at all is exempt.
 - **Optimize**: the illumination / white point / local contrast / chroma pass
   described above.
 - **OCR**: ML Kit text recognition on device, then an invisible text layer in the

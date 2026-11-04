@@ -89,6 +89,7 @@ interface Texts {
     val findEdges: String
     val moveCloser: String
     val holdStill: String
+    val focusPage: String
     val capturing: String
     val adjustDocument: String
     val discardScan: String
@@ -283,6 +284,7 @@ object Spanish : Texts {
     override val findEdges = "Busca los bordes del documento"
     override val moveCloser = "Acerca el documento"
     override val holdStill = "Sujeta el móvil quieto"
+    override val focusPage = "Enfoca el documento"
     override val capturing = "Capturando…"
     override val adjustDocument = "Ajusta el documento"
     override val discardScan = "¿Descartar el escaneo?"
@@ -467,6 +469,7 @@ object English : Texts {
     override val findEdges = "Find the document edges"
     override val moveCloser = "Move the document closer"
     override val holdStill = "Hold the phone still"
+    override val focusPage = "Focus the document"
     override val capturing = "Capturing…"
     override val adjustDocument = "Adjust the document"
     override val discardScan = "Discard the scan?"

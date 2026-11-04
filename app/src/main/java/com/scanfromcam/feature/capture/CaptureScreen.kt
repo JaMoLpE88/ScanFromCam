@@ -168,6 +168,7 @@ fun CaptureScreen(
     var quad by remember { mutableStateOf<List<Point>?>(null) }
     var stable by remember { mutableStateOf(false) }
     var covered by remember { mutableStateOf(false) }
+    var sharp by remember { mutableStateOf(true) }
     var aspect by remember { mutableStateOf(3f / 4f) }
     var cameraError by remember { mutableStateOf<String?>(null) }
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
@@ -266,7 +267,10 @@ fun CaptureScreen(
                     lastAnalysis = now
                     aspect = FrameDetector.uprightAspect(proxy)
                     val detected = FrameDetector.detect(proxy)
-                    val result = smoother.add(detected, now)
+                    val result = smoother.add(detected.quad, now)
+                    // Without a focus reading there is nothing to reject: the
+                    // page simply keeps the benefit of the doubt.
+                    val focused = detected.focus?.isSharp ?: true
                     mainHandler.post {
                         // Without a detection for a second, fall back to the full frame.
                         val fresh = smoother.latestIfFresh(QUAD_FALLBACK_MS, now)
@@ -282,12 +286,14 @@ fun CaptureScreen(
 
                         val isCovered = smoother.covers(COVERAGE_MIN)
                         covered = isCovered
+                        sharp = focused
                         val gate = autoGate.update(
                             now = now,
                             framed = stable,
                             autoEnabled = autoCapture,
                             covered = isCovered,
                             deviceStable = deviceStable,
+                            sharp = focused,
                         )
                         countdown = gate.remainingSeconds
                         if (gate.shouldCapture && !vm.busy && vm.phase == ScanPhase.CAMERA) {
@@ -417,6 +423,7 @@ fun CaptureScreen(
                         quad == null -> t.findEdges
                         !covered -> t.moveCloser
                         !deviceStable -> t.holdStill
+                        !sharp -> t.focusPage
                         stable && countdown > 0 -> t.framedCountdown(countdown)
                         stable -> t.capturing
                         else -> t.adjustDocument

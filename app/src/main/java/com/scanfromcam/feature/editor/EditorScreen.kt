@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.scanfromcam.core.Images
 import com.scanfromcam.core.Strings
+import com.scanfromcam.data.Cv
 import com.scanfromcam.domain.geometry.CropHandle
 import com.scanfromcam.domain.geometry.CropHandles
 import com.scanfromcam.domain.geometry.Quads
@@ -91,7 +93,9 @@ import com.scanfromcam.domain.model.Point
 import com.scanfromcam.feature.flow.ScanFlowViewModel
 import com.scanfromcam.ui.theme.Tokens
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.opencv.core.Mat
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -421,6 +425,7 @@ private fun CropDialog(
     var handle by remember { mutableStateOf<CropHandle?>(null) }
     var finger by remember { mutableStateOf(Offset.Zero) }
     var crossed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -506,7 +511,29 @@ private fun CropDialog(
                                                 finger += drag
                                             }
                                         },
-                                        onDragEnd = { handle = null },
+                                        onDragEnd = {
+                                            val grabbed = handle
+                                            handle = null
+                                            val current = points
+                                            // A side that ends near a real border
+                                            // is pulled onto it: the last few
+                                            // pixels are always the hardest to aim.
+                                            if (grabbed is CropHandle.Side) {
+                                                scope.launch {
+                                                    val snapped = withContext(Dispatchers.Default) {
+                                                        runCatching {
+                                                            val edges = Cv.grayscale(bmp)
+                                                            try {
+                                                                Cv.snapSide(edges, current, grabbed.index)
+                                                            } finally {
+                                                                edges.release()
+                                                            }
+                                                        }.getOrNull()
+                                                    }
+                                                    if (snapped != null) points = snapped
+                                                }
+                                            }
+                                        },
                                         onDragCancel = { handle = null },
                                     )
                                 },

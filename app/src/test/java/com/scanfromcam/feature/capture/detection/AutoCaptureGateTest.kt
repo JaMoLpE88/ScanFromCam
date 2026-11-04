@@ -86,6 +86,25 @@ class AutoCaptureGateTest {
     }
 
     @Test
+    fun `does not fire while the page reads as out of focus`() {
+        val gate = AutoCaptureGate(holdMs = 3_000)
+        gate.update(now = 0, framed = true, autoEnabled = true, sharp = false)
+        val held = gate.update(now = 5_000, framed = true, autoEnabled = true, sharp = false)
+        assertFalse(held.shouldCapture)
+        assertEquals(0, held.remainingSeconds)
+    }
+
+    @Test
+    fun `focus coming back restarts the hold`() {
+        val gate = AutoCaptureGate(holdMs = 3_000)
+        gate.update(now = 0, framed = true, autoEnabled = true)
+        gate.update(now = 2_000, framed = true, autoEnabled = true, sharp = false)
+        val restarted = gate.update(now = 2_100, framed = true, autoEnabled = true)
+        assertEquals(3, restarted.remainingSeconds)
+        assertFalse(restarted.shouldCapture)
+    }
+
+    @Test
     fun `motion restarts the hold instead of pausing it`() {
         val gate = AutoCaptureGate(holdMs = 3_000)
         gate.update(now = 0, framed = true, autoEnabled = true)

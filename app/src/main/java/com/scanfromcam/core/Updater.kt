@@ -385,14 +385,20 @@ private fun versionNumbers(value: String): List<Int>? {
     return parts.map { it.toIntOrNull() ?: return null }
 }
 
+/** One line of the notes; [title] is the bold lead-in the release body gave it. */
+data class Note(val title: String?, val text: String)
+
 private val LINK = Regex("\\[([^]]+)]\\([^)]*\\)")
 private val HEADING = Regex("^#+\\s*")
+private val BOLD_LEAD = Regex("^\\*\\*(.+?)\\*\\*\\s*:?\\s*(.*)$")
+private val EMPHASIS = Regex("(\\*\\*|\\*)(.+?)\\1")
 
 /**
- * The release body is a whole page. The sheet only wants the notes: the section
- * for the current language, then the other one, then the first readable lines.
+ * The release body is a whole page of markdown. The sheet only wants the notes:
+ * the section for the current language, then the other one, then the first
+ * readable lines, with the formatting that a Text can carry already taken out.
  */
-internal fun extractNotes(body: String, spanish: Boolean): String {
+internal fun extractNotes(body: String, spanish: Boolean): List<Note> {
     val preferred = if (spanish) "## novedades" else "## what's new"
     val fallback = if (spanish) "## what's new" else "## novedades"
     val section = sectionAfter(body, preferred) ?: sectionAfter(body, fallback)
@@ -407,15 +413,25 @@ private fun sectionAfter(body: String, heading: String): List<String>? {
     return section.takeIf { it.any { line -> line.isNotBlank() } }
 }
 
-private fun cleanNotes(lines: List<String>): String = lines.asSequence()
+private fun cleanNotes(lines: List<String>): List<Note> = lines.asSequence()
     .map { it.trim() }
     .filter { it.isNotEmpty() && !it.startsWith("|") && it != "---" && it != "***" }
+    .map { it.removePrefix("- ").removePrefix("* ").replace(HEADING, "") }
     .map { line ->
-        val text = line.replace(HEADING, "").replace("**", "").replace("`", "").replace(LINK, "$1")
-        if (text.startsWith("- ") || text.startsWith("* ")) "• " + text.drop(2) else text
+        val lead = BOLD_LEAD.find(line)
+        if (lead != null) Note(plain(lead.groupValues[1]), plain(lead.groupValues[2]))
+        else Note(null, plain(line))
     }
+    .filter { it.title != null || it.text.isNotEmpty() }
     .take(40)
-    .joinToString("\n")
+    .toList()
+
+/** Links, code ticks and both kinds of asterisks, gone: the sheet draws the rest. */
+private fun plain(text: String): String = text
+    .replace(LINK, "$1")
+    .replace("`", "")
+    .replace(EMPHASIS, "$2")
+    .trim()
 
 internal fun hex(bytes: ByteArray): String =
     bytes.joinToString("") { "%02x".format(it) }
