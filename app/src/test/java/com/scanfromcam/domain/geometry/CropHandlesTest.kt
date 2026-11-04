@@ -68,6 +68,17 @@ class CropHandlesTest {
     }
 
     @Test
+    fun `the closest point of a side stays on that side`() {
+        val above = CropHandles.closestOnSide(quad, side = 0, x = 0.3f, y = 0f)
+        assertEquals(0.3f, above.x, 1e-6f)
+        assertEquals(0.1f, above.y, 1e-6f)
+
+        val pastTheEnd = CropHandles.closestOnSide(quad, side = 0, x = 0f, y = 0.5f)
+        assertEquals(0.1f, pastTheEnd.x, 1e-6f)
+        assertEquals(0.1f, pastTheEnd.y, 1e-6f)
+    }
+
+    @Test
     fun `side midpoints are the average of their corners`() {
         val midpoints = CropHandles.sideMidpoints(quad)
         assertEquals(0.5f, midpoints[0].x, 1e-6f)

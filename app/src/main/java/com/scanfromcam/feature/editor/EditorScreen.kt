@@ -595,15 +595,30 @@ private fun CropDialog(
                             }
 
                             if (handle != null) {
-                                drawCropMagnifier(
-                                    image = imageBitmap,
-                                    source = bmp,
-                                    finger = finger,
-                                    originX = ox,
-                                    originY = oy,
-                                    drawWidth = dw,
-                                    drawHeight = dh,
-                                )
+                                // The loupe magnifies the point that will be set, not the
+                                // finger: the handle can sit a few pixels away from it, and
+                                // releasing must leave the crop exactly where the crosshair
+                                // showed.
+                                val active = handle
+                                val cornersPx = points.map { Point(ox + it.x * dw, oy + it.y * dh) }
+                                val target = when (active) {
+                                    is CropHandle.Corner -> cornersPx[active.index]
+                                    is CropHandle.Side ->
+                                        CropHandles.closestOnSide(cornersPx, active.index, finger.x, finger.y)
+                                    null -> null
+                                }
+                                if (target != null) {
+                                    drawCropMagnifier(
+                                        image = imageBitmap,
+                                        source = bmp,
+                                        finger = finger,
+                                        target = Offset(target.x, target.y),
+                                        originX = ox,
+                                        originY = oy,
+                                        drawWidth = dw,
+                                        drawHeight = dh,
+                                    )
+                                }
                             }
                         }
                     }
@@ -644,11 +659,17 @@ private fun CropDialog(
  * covers the exact pixel being decided, so the editor repeats the area around
  * it above the finger at 2.5x. It is drawn on the same canvas as the crop, so
  * it always tracks the finger without recomposing anything.
+ *
+ * The circle follows the finger, but the magnified area is centred on [target],
+ * the handle that will be committed: the corner itself, or the nearest point of
+ * the dragged side. The crosshair sits on that point, so letting go places the
+ * crop exactly where the crosshair was.
  */
 private fun DrawScope.drawCropMagnifier(
     image: ImageBitmap,
     source: android.graphics.Bitmap,
     finger: Offset,
+    target: Offset,
     originX: Float,
     originY: Float,
     drawWidth: Float,
@@ -665,8 +686,8 @@ private fun DrawScope.drawCropMagnifier(
 
     val zoom = 2.5f
     val halfView = radius / zoom
-    val viewX = (finger.x - originX).coerceIn(halfView, (drawWidth - halfView).coerceAtLeast(halfView))
-    val viewY = (finger.y - originY).coerceIn(halfView, (drawHeight - halfView).coerceAtLeast(halfView))
+    val viewX = (target.x - originX).coerceIn(halfView, (drawWidth - halfView).coerceAtLeast(halfView))
+    val viewY = (target.y - originY).coerceIn(halfView, (drawHeight - halfView).coerceAtLeast(halfView))
 
     val sourceHalf = halfView / scale
     val sourceSize = (sourceHalf * 2f).roundToInt().coerceIn(8, source.width)
@@ -707,17 +728,23 @@ private fun DrawScope.drawCropMagnifier(
         center = center,
         style = Stroke(width = 2.dp.toPx()),
     )
+    // Where the handle lands inside the circle: the centre unless the view had
+    // to stop at the edge of the image.
+    val mark = Offset(
+        x = center.x + (target.x - originX - viewX) * zoom,
+        y = center.y + (target.y - originY - viewY) * zoom,
+    )
     val tick = 7.dp.toPx()
     drawLine(
         color = Tokens.AccentMid,
-        start = Offset(center.x - tick, center.y),
-        end = Offset(center.x + tick, center.y),
+        start = Offset(mark.x - tick, mark.y),
+        end = Offset(mark.x + tick, mark.y),
         strokeWidth = 1.5.dp.toPx(),
     )
     drawLine(
         color = Tokens.AccentMid,
-        start = Offset(center.x, center.y - tick),
-        end = Offset(center.x, center.y + tick),
+        start = Offset(mark.x, mark.y - tick),
+        end = Offset(mark.x, mark.y + tick),
         strokeWidth = 1.5.dp.toPx(),
     )
 }

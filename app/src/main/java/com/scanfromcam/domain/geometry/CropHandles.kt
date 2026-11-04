@@ -118,16 +118,29 @@ object CropHandles {
             Point((a.x + b.x) / 2f, (a.y + b.y) / 2f)
         }
 
+    /**
+     * The point of one side closest to ([x], [y]): where a finger on that edge
+     * actually sits. The magnifier aims there, so what it shows is what moves.
+     */
+    fun closestOnSide(pointsPx: List<Point>, side: Int, x: Float, y: Float): Point =
+        project(x, y, pointsPx[side], pointsPx[(side + 1) % 4])
+
     /** A side already crossing the opposite one cannot move any further. */
     private fun clamp(delta: Float, low: Float, high: Float): Float =
         if (high < low) 0f else delta.coerceIn(low, high)
 
-    private fun distanceToSegment(x: Float, y: Float, a: Point, b: Point): Float {
+    /** The point of segment [a]-[b] closest to ([x], [y]). */
+    private fun project(x: Float, y: Float, a: Point, b: Point): Point {
         val abx = b.x - a.x
         val aby = b.y - a.y
         val lengthSquared = abx * abx + aby * aby
-        if (lengthSquared <= 1e-6f) return hypot(x - a.x, y - a.y)
+        if (lengthSquared <= 1e-6f) return a
         val t = (((x - a.x) * abx + (y - a.y) * aby) / lengthSquared).coerceIn(0f, 1f)
-        return hypot(x - (a.x + t * abx), y - (a.y + t * aby))
+        return Point(a.x + t * abx, a.y + t * aby)
+    }
+
+    private fun distanceToSegment(x: Float, y: Float, a: Point, b: Point): Float {
+        val closest = project(x, y, a, b)
+        return hypot(x - closest.x, y - closest.y)
     }
 }
