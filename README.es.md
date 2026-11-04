@@ -51,6 +51,16 @@ tú la autorizas; si dices que no, no abre ni un socket.
 
 ## Novedades
 
+**Las novedades se pueden volver a leer.** Ajustes tiene ahora *Novedades* dentro de
+Actualizaciones, y el número de versión de abajo también abre lo que cambió en la
+última versión: lo mismo que enseñaba el aviso de actualización, sin pedir nada a la
+red.
+
+**La lupa del recorte apunta donde vas a soltar.** Antes ampliaba lo que había bajo
+el dedo, así que el vértice caía unos píxeles más allá de lo que habías encuadrado.
+Ahora amplía la esquina —o el punto del lado— que se va a colocar, así que al soltar
+el recorte queda justo donde lo viste en la lupa.
+
 **Dispara cuando la página está enfocada.** El auto-disparo ya no mira solo si el
 móvil está quieto: ahora mide también lo nítida que se lee la página. Mientras el
 texto sale blando, la tira dice *Enfoca el documento* y el obturador espera, así
@@ -242,8 +252,8 @@ Ajustes. Añadir otro idioma es implementar `Texts`
 
 Los APK firmados van adjuntos en cada [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.3.0-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
-- `ScanFromCam-1.3.0-x86_64.apk` — emuladores y tablets x86.
+- `ScanFromCam-1.3.1-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
+- `ScanFromCam-1.3.1-x86_64.apk` — emuladores y tablets x86.
 
 Descarga el APK y ábrelo en el móvil; Android pedirá permiso para instalar desde esa
 fuente. Sin cuenta de tienda y sin registro. A partir de la 1.2.0 la app se actualiza
@@ -277,7 +287,7 @@ instalable rápida, firmada con la clave de debug:
 
 ## Pruebas
 
-- `./gradlew :app:testDebugUnitTest` — 68 tests unitarios: geometría y orden del
+- `./gradlew :app:testDebugUnitTest` — 70 tests unitarios: geometría y orden del
   cuadrilátero, suavizado, ventana de estabilidad, decisión de auto-disparo
   (encuadre, cobertura, movimiento y enfoque), el umbral de nitidez, manejo del
   recorte, rotación, maquetación de la marca de agua, nombres de fichero,

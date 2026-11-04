@@ -51,6 +51,15 @@ and it never opens a socket.
 
 ## What's new
 
+**Release notes you can read again.** Settings now has *What's new* under Updates,
+and the version number at the bottom opens it too: the same notes the update sheet
+showed, with nothing asked of the network.
+
+**The crop loupe aims where you will let go.** It used to magnify whatever was under
+the finger, so the corner landed a few pixels away from what you had lined up. Now
+it magnifies the corner — or the point of the side — that is being placed, so
+letting go leaves the crop exactly where the loupe showed it.
+
 **It shoots when the page is in focus.** Auto capture used to check only that the
 phone was still; now it also measures how crisp the page reads. While the text
 looks soft the strip says *Focus the document* and the shutter waits, so the photo
@@ -232,8 +241,8 @@ Settings. More languages are a `Texts` implementation away
 
 Signed APKs are attached to every [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.3.0-arm64-v8a.apk` — phones and tablets (almost every current device).
-- `ScanFromCam-1.3.0-x86_64.apk` — emulators and x86 tablets.
+- `ScanFromCam-1.3.1-arm64-v8a.apk` — phones and tablets (almost every current device).
+- `ScanFromCam-1.3.1-x86_64.apk` — emulators and x86 tablets.
 
 Download the APK and open it on the phone; Android will ask to allow installs from that
 source. No store account, no sign-up. From 1.2.0 on, the app updates itself from
@@ -267,7 +276,7 @@ build signed with the debug key:
 
 ## Tests
 
-- `./gradlew :app:testDebugUnitTest` — 68 unit tests: quad geometry and ordering,
+- `./gradlew :app:testDebugUnitTest` — 70 unit tests: quad geometry and ordering,
   quad smoothing, stability window, capture gating (frame, coverage, movement and
   focus), the focus threshold, crop handles, rotation, watermark layout, file
   naming, language detection, share MIME types, and the updater (version ordering,
