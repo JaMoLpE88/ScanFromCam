@@ -252,8 +252,8 @@ Ajustes. Añadir otro idioma es implementar `Texts`
 
 Los APK firmados van adjuntos en cada [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.3.1-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
-- `ScanFromCam-1.3.1-x86_64.apk` — emuladores y tablets x86.
+- `ScanFromCam-1.3.2-arm64-v8a.apk` — móviles y tablets (casi cualquier dispositivo actual).
+- `ScanFromCam-1.3.2-x86_64.apk` — emuladores y tablets x86.
 
 Descarga el APK y ábrelo en el móvil; Android pedirá permiso para instalar desde esa
 fuente. Sin cuenta de tienda y sin registro. A partir de la 1.2.0 la app se actualiza

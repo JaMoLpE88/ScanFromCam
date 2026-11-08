@@ -241,8 +241,8 @@ Settings. More languages are a `Texts` implementation away
 
 Signed APKs are attached to every [release](https://github.com/JaMoLpE88/ScanFromCam/releases):
 
-- `ScanFromCam-1.3.1-arm64-v8a.apk` — phones and tablets (almost every current device).
-- `ScanFromCam-1.3.1-x86_64.apk` — emulators and x86 tablets.
+- `ScanFromCam-1.3.2-arm64-v8a.apk` — phones and tablets (almost every current device).
+- `ScanFromCam-1.3.2-x86_64.apk` — emulators and x86 tablets.
 
 Download the APK and open it on the phone; Android will ask to allow installs from that
 source. No store account, no sign-up. From 1.2.0 on, the app updates itself from
