@@ -22,3 +22,11 @@ captures/
 # Salidas de trabajo locales
 .build/
 keystore.properties
+
+# Agent and planning artifacts (never committed)
+docs/plans/
+.research/
+.artifacts/
+.cursor/
+.codex/
+AGENTS.md
